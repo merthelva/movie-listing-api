@@ -30,6 +30,7 @@ export function throwError({ statusCode, message }: ThrowErrorType) {
     case HttpStatus.CONFLICT: {
       throw new ConflictException(message);
     }
+    case HttpStatus.INTERNAL_SERVER_ERROR:
     default: {
       throw new InternalServerErrorException(message);
     }
