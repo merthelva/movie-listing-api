@@ -4,15 +4,17 @@ import type {
   SearchMovieResultType,
   TmdbSearchResultType,
 } from '@movies/types';
-import type { ConfigService } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class MoviesService {
-  private readonly apiKey: string;
+  private readonly readAccessToken: string;
   private readonly baseUrl: string;
 
   constructor(private configService: ConfigService) {
-    this.apiKey = this.configService.getOrThrow<string>('TMDB_API_KEY');
+    this.readAccessToken = this.configService.getOrThrow<string>(
+      'TMDB_API_READ_ACCESS_TOKEN',
+    );
     this.baseUrl = this.configService.get<string>(
       'TMDB_BASE_URL',
       'https://api.themoviedb.org/3',
@@ -28,7 +30,7 @@ export class MoviesService {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${this.readAccessToken}`,
       },
     });
 

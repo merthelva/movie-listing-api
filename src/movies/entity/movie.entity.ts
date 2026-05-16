@@ -1,6 +1,7 @@
 import { Expose } from 'class-transformer';
-import { Column, PrimaryColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn } from 'typeorm';
 
+@Entity()
 export class MovieEntity {
   @Expose()
   @PrimaryColumn({ unique: true })
@@ -15,7 +16,7 @@ export class MovieEntity {
   overview!: string;
 
   @Expose()
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   posterPath!: string | null;
 
   @Expose()
