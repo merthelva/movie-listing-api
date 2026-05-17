@@ -2,6 +2,7 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { WatchlistEntity } from '@watchlists/entity/watchlist.entity';
+import { MovieEntity } from '@movies/entity/movie.entity';
 import { MoviesService } from '@movies/movies.service';
 import { GenericResponseType } from '@/common/types/generic-response.type';
 import { SuccessResponseType } from '@/common/types/success-response.type';
@@ -18,27 +19,29 @@ export class WatchlistsService {
   constructor(
     @InjectRepository(WatchlistEntity)
     private watchlistRepository: Repository<WatchlistEntity>,
+    @InjectRepository(MovieEntity)
+    private movieRepository: Repository<MovieEntity>,
     private moviesService: MoviesService,
   ) {}
 
-  async createWatchlist(
+  async createUserWatchlist(
     userId: number,
-    createWatchlistDto: CreateWatchlistDto,
+    createUserWatchlistDto: CreateWatchlistDto,
   ): Promise<GenericResponseType<WatchlistEntity>> {
     try {
       const foundUserWatchlist = await this.watchlistRepository.findOne({
-        where: { name: createWatchlistDto.name, user: { id: userId } },
+        where: { name: createUserWatchlistDto.name, user: { id: userId } },
       });
       if (foundUserWatchlist) {
         return {
           code: HttpStatus.FORBIDDEN,
           status: 'error',
-          message: `Watchlist with name ${createWatchlistDto.name} for this user already exists`,
+          message: `Watchlist with name ${createUserWatchlistDto.name} for this user already exists`,
         };
       }
 
       const watchlist = this.watchlistRepository.create({
-        name: createWatchlistDto.name,
+        name: createUserWatchlistDto.name,
         user: { id: userId },
       });
       return {
@@ -54,7 +57,7 @@ export class WatchlistsService {
     }
   }
 
-  async deleteWatchlist(
+  async deleteUserWatchlist(
     userId: number,
     id: number,
   ): Promise<GenericResponseType<SuccessResponseType>> {
@@ -208,7 +211,33 @@ export class WatchlistsService {
         };
       }
 
-      foundUserWatchlist.movies.push(foundMovie);
+      let foundMovieEntity = await this.movieRepository.findOne({
+        where: { tmdbId: foundMovie.tmdbId },
+      });
+      if (!foundMovieEntity) {
+        foundMovieEntity = this.movieRepository.create({
+          tmdbId: foundMovie.tmdbId,
+          title: foundMovie.title,
+          overview: foundMovie.overview,
+          posterPath: foundMovie.posterPath ?? null,
+          releaseDate: foundMovie.releaseDate,
+          voteAverage: foundMovie.voteAverage,
+        });
+        await this.movieRepository.save(foundMovieEntity);
+      }
+
+      const isMovieAddedToWatchlist = foundUserWatchlist.movies.some(
+        (mv) => mv.tmdbId === foundMovie.tmdbId,
+      );
+      if (isMovieAddedToWatchlist) {
+        return {
+          code: HttpStatus.FORBIDDEN,
+          status: 'error',
+          message: 'This movie is already in the watchlist for this user.',
+        };
+      }
+
+      foundUserWatchlist.movies.push(foundMovieEntity);
       await this.watchlistRepository.save(foundUserWatchlist);
 
       return {

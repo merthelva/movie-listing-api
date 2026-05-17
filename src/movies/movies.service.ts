@@ -5,13 +5,20 @@ import type {
   TmdbSearchResultType,
 } from '@movies/types';
 import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { MovieEntity } from './entity/movie.entity';
+import type { Repository } from 'typeorm';
 
 @Injectable()
 export class MoviesService {
   private readonly readAccessToken: string;
   private readonly baseUrl: string;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    @InjectRepository(MovieEntity)
+    private movieRepository: Repository<MovieEntity>,
+    private configService: ConfigService,
+  ) {
     this.readAccessToken = this.configService.getOrThrow<string>(
       'TMDB_API_READ_ACCESS_TOKEN',
     );

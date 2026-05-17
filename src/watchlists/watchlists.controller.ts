@@ -24,7 +24,7 @@ import {
   WatchlistResponseDto,
 } from '@watchlists/dto/watchlist-response.dto';
 import { PaginationDto } from '@/common/dtos/pagination.dto';
-import type { UpdateWatchlistDto } from './dto/update-watchlist.dto';
+import { UpdateWatchlistDto } from './dto/update-watchlist.dto';
 
 @Controller('watchlists')
 @UseGuards(JwtGuard)
@@ -34,13 +34,13 @@ export class WatchlistsController {
   @Post('create')
   @UseGuards(JwtGuard)
   @Serialize(WatchlistResponseDto)
-  async createWatchlist(
+  async createUserWatchlist(
     @CurrentUser() user: UserEntity,
-    @Body() createWatchlistDto: CreateWatchlistDto,
+    @Body() createUserWatchlistDto: CreateWatchlistDto,
   ) {
-    const response = await this.watchlistsService.createWatchlist(
+    const response = await this.watchlistsService.createUserWatchlist(
       user.id,
-      createWatchlistDto,
+      createUserWatchlistDto,
     );
     if (response.status === 'error') {
       return throwError({
@@ -54,11 +54,14 @@ export class WatchlistsController {
 
   @Delete('/delete/:id')
   @UseGuards(JwtGuard)
-  async deleteWatchlist(
+  async deleteUserWatchlist(
     @CurrentUser() user: UserEntity,
     @Param('id', ParseIntPipe) id: number,
   ) {
-    const response = await this.watchlistsService.deleteWatchlist(user.id, id);
+    const response = await this.watchlistsService.deleteUserWatchlist(
+      user.id,
+      id,
+    );
     if (response.status === 'error') {
       return throwError({
         statusCode: response.code,

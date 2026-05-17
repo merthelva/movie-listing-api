@@ -24,6 +24,6 @@ export class MovieEntity {
   releaseDate!: string;
 
   @Expose()
-  @Column()
+  @Column({ type: 'double precision' })
   voteAverage!: number;
 }
