@@ -1,7 +1,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { MoviesService } from '@movies/movies.service';
 import { SearchMoviesDto } from '@movies/dto/search-movies.dto';
-import { throwError } from '@/common/utils/throw-error';
+import { returnOrThrow } from '@/common/utils/return-or-throw';
 
 @Controller('movies')
 export class MoviesController {
@@ -13,13 +13,7 @@ export class MoviesController {
       searchMoviesDto.query,
       searchMoviesDto.page,
     );
-    if (response.status === 'error') {
-      return throwError({
-        statusCode: response.code,
-        message: response.message,
-      });
-    }
 
-    return response.data;
+    return returnOrThrow(response);
   }
 }

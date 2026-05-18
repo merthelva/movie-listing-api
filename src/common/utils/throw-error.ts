@@ -13,7 +13,7 @@ type ThrowErrorType = {
   message?: string;
 };
 
-export function throwError({ statusCode, message }: ThrowErrorType) {
+export function throwError({ statusCode, message }: ThrowErrorType): never {
   switch (statusCode) {
     case HttpStatus.BAD_REQUEST: {
       throw new BadRequestException(message);

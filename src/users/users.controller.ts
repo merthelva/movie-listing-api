@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { UserEntity } from './entity/user.entity';
 import { UsersService } from './users.service';
-import { throwError } from '@/common/utils/throw-error';
+import { returnOrThrow } from '@/common/utils/return-or-throw';
 import { Serialize } from '@/common/interceptors/serialize.interceptor';
 import { UserRegisterResponseDto } from './dto/user-response.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -31,14 +31,7 @@ export class UsersController {
   @Serialize(UserRegisterResponseDto)
   async getCurrentUser(@CurrentUser() user: UserEntity) {
     const response = await this.usersService.getCurrentUser(user.id);
-    if (response.status === 'error') {
-      return throwError({
-        statusCode: response.code,
-        message: response.message,
-      });
-    }
-
-    return response.data;
+    return returnOrThrow(response);
   }
 
   @Patch(':id')
@@ -53,14 +46,7 @@ export class UsersController {
       currentUser,
       updatedFields,
     );
-    if (response.status === 'error') {
-      return throwError({
-        statusCode: response.code,
-        message: response.message,
-      });
-    }
-
-    return response.data;
+    return returnOrThrow(response);
   }
 
   @Get('all')
@@ -69,14 +55,7 @@ export class UsersController {
   @Serialize(GetAllUsersResponseDto)
   async getAllUsers(@Query() paginationDto: PaginationDto) {
     const response = await this.usersService.getAllUsers(paginationDto);
-    if (response.status === 'error') {
-      return throwError({
-        statusCode: response.code,
-        message: response.message,
-      });
-    }
-
-    return response.data;
+    return returnOrThrow(response);
   }
 
   @Delete('/delete/:id')
@@ -90,13 +69,6 @@ export class UsersController {
       currentUser.id,
       userIdToDelete,
     );
-    if (response.status === 'error') {
-      return throwError({
-        statusCode: response.code,
-        message: response.message,
-      });
-    }
-
-    return response.data;
+    return returnOrThrow(response);
   }
 }

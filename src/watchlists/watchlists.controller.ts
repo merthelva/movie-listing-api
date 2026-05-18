@@ -16,7 +16,7 @@ import { UserEntity } from '@users/entity/user.entity';
 import { WatchlistsService } from '@watchlists/watchlists.service';
 import { CreateWatchlistDto } from '@watchlists/dto/create-watchlist.dto';
 import { AddMovieToUserWatchlistDto } from '@watchlists/dto/add-movie-to-user-watchlist.dto';
-import { throwError } from '@/common/utils/throw-error';
+import { returnOrThrow } from '@/common/utils/return-or-throw';
 import { Serialize } from '@/common/interceptors/serialize.interceptor';
 import {
   GetAllUserWatchlistMoviesResponseDto,
@@ -42,14 +42,8 @@ export class WatchlistsController {
       user.id,
       createUserWatchlistDto,
     );
-    if (response.status === 'error') {
-      return throwError({
-        statusCode: response.code,
-        message: response.message,
-      });
-    }
 
-    return response.data;
+    return returnOrThrow(response);
   }
 
   @Delete('/delete/:id')
@@ -62,14 +56,8 @@ export class WatchlistsController {
       user.id,
       id,
     );
-    if (response.status === 'error') {
-      return throwError({
-        statusCode: response.code,
-        message: response.message,
-      });
-    }
 
-    return response.data;
+    return returnOrThrow(response);
   }
 
   @Get('all')
@@ -83,14 +71,8 @@ export class WatchlistsController {
       user.id,
       paginationDto,
     );
-    if (response.status === 'error') {
-      return throwError({
-        statusCode: response.code,
-        message: response.message,
-      });
-    }
 
-    return response.data;
+    return returnOrThrow(response);
   }
 
   @Get(':id')
@@ -106,14 +88,8 @@ export class WatchlistsController {
       id,
       paginationDto,
     );
-    if (response.status === 'error') {
-      return throwError({
-        statusCode: response.code,
-        message: response.message,
-      });
-    }
 
-    return response.data;
+    return returnOrThrow(response);
   }
 
   @Post(':id/addMovie')
@@ -128,14 +104,8 @@ export class WatchlistsController {
       id,
       addMovieDto.name,
     );
-    if (response.status === 'error') {
-      return throwError({
-        statusCode: response.code,
-        message: response.message,
-      });
-    }
 
-    return response.data;
+    return returnOrThrow(response);
   }
 
   @Delete(':id/deleteMovie/:movieTmdbId')
@@ -150,14 +120,8 @@ export class WatchlistsController {
       id,
       movieTmdbId,
     );
-    if (response.status === 'error') {
-      return throwError({
-        statusCode: response.code,
-        message: response.message,
-      });
-    }
 
-    return response.data;
+    return returnOrThrow(response);
   }
 
   @Patch(':id')
@@ -172,13 +136,7 @@ export class WatchlistsController {
       id,
       updatedFields,
     );
-    if (response.status === 'error') {
-      return throwError({
-        statusCode: response.code,
-        message: response.message,
-      });
-    }
 
-    return response.data;
+    return returnOrThrow(response);
   }
 }
