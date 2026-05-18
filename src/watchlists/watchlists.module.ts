@@ -5,13 +5,14 @@ import { WatchlistsService } from '@watchlists/watchlists.service';
 import { WatchlistsController } from '@watchlists/watchlists.controller';
 import { MoviesModule } from '@movies/movies.module';
 import { MovieEntity } from '@movies/entity/movie.entity';
+import { WatchlistSchemaService } from './watchlist-schema.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([WatchlistEntity, MovieEntity]),
     MoviesModule,
   ],
-  providers: [WatchlistsService],
+  providers: [WatchlistsService, WatchlistSchemaService],
   controllers: [WatchlistsController],
 })
 export class WatchlistsModule {}

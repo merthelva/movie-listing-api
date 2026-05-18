@@ -23,7 +23,17 @@ export class WatchlistEntity {
   user!: UserEntity;
 
   @ManyToMany(() => MovieEntity)
-  @JoinTable()
+  @JoinTable({
+    name: 'watchlist_movies',
+    joinColumn: {
+      name: 'watchlist_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'movie_tmdb_id',
+      referencedColumnName: 'tmdbId',
+    },
+  })
   movies!: Array<MovieEntity>;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
