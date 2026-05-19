@@ -1,7 +1,9 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { GenericResponseType } from '@/common/types/generic-response.type';
 import type {
+  MovieDetailsType,
   SearchMovieResultType,
+  TmdbMovieDetailType,
   TmdbSearchResultType,
 } from '@movies/types';
 import { ConfigService } from '@nestjs/config';
@@ -16,7 +18,7 @@ export class MoviesService {
   private readonly fetchTimeoutMs: number;
   private readonly cacheStoreMap = new Map<
     string,
-    { value: SearchMovieResultType; expiresAt: number }
+    { value: SearchMovieResultType | MovieDetailsType; expiresAt: number }
   >();
 
   constructor(private configService: ConfigService) {
@@ -41,15 +43,74 @@ export class MoviesService {
     );
   }
 
+  async getMovieDetails(
+    tmdbId: number,
+  ): Promise<GenericResponseType<MovieDetailsType>> {
+    const cacheKey = `movie:${tmdbId}`;
+    const now = Date.now();
+    const cachedMovieDetails = this.cacheStoreMap.get(cacheKey);
+    if (cachedMovieDetails && cachedMovieDetails.expiresAt > now) {
+      return {
+        status: 'success',
+        data: cachedMovieDetails.value as MovieDetailsType,
+      };
+    }
+
+    const url = `${this.baseUrl}/movie/${tmdbId}`;
+
+    try {
+      const response = await this.fetchWithRetry(url);
+      if (!response.ok) {
+        return {
+          code: HttpStatus.INTERNAL_SERVER_ERROR,
+          status: 'error',
+          message: 'An error occurred while fetching movie details from TMDB.',
+        };
+      }
+
+      const data = (await response.json()) as TmdbMovieDetailType;
+      const cachedMovieDetailsValue: MovieDetailsType = {
+        tmdbId: data.id,
+        title: data.title,
+        overview: data.overview,
+        posterPath: data.poster_path ?? null,
+        budget: data.budget,
+        genres: data.genres.map((genre) => genre.name),
+        revenue: data.revenue,
+        runtime: data.runtime,
+        releaseDate: data.release_date,
+        voteAverage:
+          data.vote_average != null ? +data.vote_average.toFixed(1) : 0,
+        voteCount: data.vote_count,
+      };
+
+      this.cacheStoreMap.set(cacheKey, {
+        value: cachedMovieDetailsValue,
+        expiresAt: Date.now() + this.cacheTtlMs,
+      });
+
+      return { status: 'success', data: cachedMovieDetailsValue };
+    } catch (err) {
+      return {
+        code: HttpStatus.INTERNAL_SERVER_ERROR,
+        status: 'error',
+        message: 'An error occurred while fetching movie details from TMDB.',
+      };
+    }
+  }
+
   async searchMovies(
     query: string,
     page: number = 1,
   ): Promise<GenericResponseType<SearchMovieResultType>> {
-    const cacheKey = `${query.toLowerCase()}:${page}`;
+    const cacheKey = `search:${query.toLowerCase()}:${page}`;
     const now = Date.now();
     const cachedMovieResults = this.cacheStoreMap.get(cacheKey);
     if (cachedMovieResults && cachedMovieResults.expiresAt > now) {
-      return { status: 'success', data: cachedMovieResults.value };
+      return {
+        status: 'success',
+        data: cachedMovieResults.value as SearchMovieResultType,
+      };
     }
 
     const url = `${this.baseUrl}/search/movie?query=${encodeURIComponent(query)}&page=${page}`;
@@ -75,13 +136,14 @@ export class MoviesService {
           overview: item.overview,
           posterPath: item.poster_path ?? null,
           releaseDate: item.release_date,
-          voteAverage: +item.vote_average.toFixed(1),
+          voteAverage:
+            item.vote_average != null ? +item.vote_average.toFixed(1) : 0,
         })),
       };
 
       this.cacheStoreMap.set(cacheKey, {
         value: cachedMovieResultsValue,
-        expiresAt: now + this.cacheTtlMs,
+        expiresAt: Date.now() + this.cacheTtlMs,
       });
 
       return { status: 'success', data: cachedMovieResultsValue };
