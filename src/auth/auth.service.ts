@@ -22,7 +22,7 @@ export class AuthService {
   ): Promise<GenericResponseType<UserEntity>> {
     try {
       const foundUser = await this.usersRepository.findOne({
-        where: { email: createUserDto.email },
+        where: { email: createUserDto.email.toLowerCase() },
       });
       if (foundUser) {
         return {
@@ -57,22 +57,22 @@ export class AuthService {
   ): Promise<GenericResponseType<LoginResponseType>> {
     try {
       const user = await this.usersRepository.findOne({
-        where: { email },
+        where: { email: email.toLowerCase() },
       });
       if (!user) {
         return {
-          code: HttpStatus.NOT_FOUND,
+          code: HttpStatus.UNAUTHORIZED,
           status: 'error',
-          message: `User with ${email} is not found`,
+          message: 'Invalid credentials',
         };
       }
 
       const doPasswordsMatch = await compare(password, user.password);
       if (!doPasswordsMatch) {
         return {
-          code: HttpStatus.FORBIDDEN,
+          code: HttpStatus.UNAUTHORIZED,
           status: 'error',
-          message: 'Invalid password is provided',
+          message: 'Invalid credentials',
         };
       }
 
@@ -86,7 +86,9 @@ export class AuthService {
         status: 'success',
         data: {
           accessToken,
-          ...user,
+          id: user.id,
+          email: user.email,
+          role: user.role,
         },
       };
     } catch (error) {
@@ -100,8 +102,17 @@ export class AuthService {
 
   async removeAccount(
     id: number,
+    currentUserId: number,
   ): Promise<GenericResponseType<SuccessResponseType>> {
     try {
+      if (id !== currentUserId) {
+        return {
+          code: HttpStatus.UNAUTHORIZED,
+          status: 'error',
+          message: 'You can only delete your own account.',
+        };
+      }
+
       const user = await this.usersRepository.findOne({
         where: { id },
       });
@@ -109,11 +120,11 @@ export class AuthService {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
-          message: `User with id ${id} is not found`,
+          message: 'User not found',
         };
       }
 
-      await this.usersRepository.remove(user);
+      await this.usersRepository.update({ id }, { deletedAt: new Date() });
 
       return {
         status: 'success',

@@ -7,4 +7,7 @@ export type JwtPayloadType = {
 
 export type LoginResponseType = {
   accessToken: string;
-} & UserEntity;
+  id: number;
+  email: string;
+  role: UserEntity['role'];
+};

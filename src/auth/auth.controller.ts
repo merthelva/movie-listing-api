@@ -5,6 +5,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from '@users/dto/create-user.dto';
@@ -15,6 +16,9 @@ import {
 } from '@/users/dto/user-response.dto';
 import { returnOrThrow } from '@/common/utils/return-or-throw.utils';
 import { Serialize } from '@/common/interceptors/serialize.interceptor';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import type { UserEntity } from '@users/entity/user.entity';
+import { JwtGuard } from './guards/jwt.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -35,8 +39,12 @@ export class AuthController {
   }
 
   @Delete('/remove/:id')
-  async removeAccount(@Param('id', ParseIntPipe) id: number) {
-    const response = await this.authService.removeAccount(id);
+  @UseGuards(JwtGuard)
+  async removeAccount(
+    @CurrentUser() currentUser: UserEntity,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    const response = await this.authService.removeAccount(id, currentUser.id);
     return returnOrThrow(response);
   }
 }

@@ -96,7 +96,7 @@ export class UsersService {
         updatedFields.email != null &&
         (await this.usersRepository.exists({
           where: {
-            email: updatedFields.email,
+            email: updatedFields.email.toLowerCase(),
           },
         }));
       if (hasUserWithSameEmail) {
