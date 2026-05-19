@@ -29,8 +29,8 @@ export class UsersController {
   @Get('me')
   @UseGuards(JwtGuard)
   @Serialize(UserRegisterResponseDto)
-  async getCurrentUser(@CurrentUser() user: UserEntity) {
-    const response = await this.usersService.getCurrentUser(user.id);
+  async getCurrentUser(@CurrentUser() currentUser: UserEntity) {
+    const response = await this.usersService.getCurrentUser(currentUser.id);
     return returnOrThrow(response);
   }
 

@@ -35,11 +35,11 @@ export class WatchlistsController {
   @UseGuards(JwtGuard)
   @Serialize(WatchlistResponseDto)
   async createUserWatchlist(
-    @CurrentUser() user: UserEntity,
+    @CurrentUser() currentUser: UserEntity,
     @Body() createUserWatchlistDto: CreateWatchlistDto,
   ) {
     const response = await this.watchlistsService.createUserWatchlist(
-      user.id,
+      currentUser.id,
       createUserWatchlistDto,
     );
 
@@ -49,11 +49,11 @@ export class WatchlistsController {
   @Delete('/delete/:id')
   @UseGuards(JwtGuard)
   async deleteUserWatchlist(
-    @CurrentUser() user: UserEntity,
+    @CurrentUser() currentUser: UserEntity,
     @Param('id', ParseIntPipe) id: number,
   ) {
     const response = await this.watchlistsService.deleteUserWatchlist(
-      user.id,
+      currentUser.id,
       id,
     );
 
@@ -64,11 +64,11 @@ export class WatchlistsController {
   @UseGuards(JwtGuard)
   @Serialize(GetAllUserWatchlistsResponseDto)
   async getAllUserWatchlists(
-    @CurrentUser() user: UserEntity,
+    @CurrentUser() currentUser: UserEntity,
     @Query() paginationDto: PaginationDto,
   ) {
     const response = await this.watchlistsService.getAllUserWatchlists(
-      user.id,
+      currentUser.id,
       paginationDto,
     );
 
@@ -79,12 +79,12 @@ export class WatchlistsController {
   @UseGuards(JwtGuard)
   @Serialize(GetAllUserWatchlistMoviesResponseDto)
   async getAllUserWatchlistMovies(
-    @CurrentUser() user: UserEntity,
+    @CurrentUser() currentUser: UserEntity,
     @Param('id', ParseIntPipe) id: number,
     @Query() paginationDto: PaginationDto,
   ) {
     const response = await this.watchlistsService.getAllUserWatchlistMovies(
-      user.id,
+      currentUser.id,
       id,
       paginationDto,
     );
@@ -95,12 +95,12 @@ export class WatchlistsController {
   @Post(':id/addMovie')
   @UseGuards(JwtGuard)
   async addMovieToUserWatchlist(
-    @CurrentUser() user: UserEntity,
+    @CurrentUser() currentUser: UserEntity,
     @Param('id', ParseIntPipe) id: number,
     @Body() addMovieDto: AddMovieToUserWatchlistDto,
   ) {
     const response = await this.watchlistsService.addMovieToUserWatchlist(
-      user.id,
+      currentUser.id,
       id,
       addMovieDto.name,
     );
@@ -111,12 +111,12 @@ export class WatchlistsController {
   @Delete(':id/deleteMovie/:movieTmdbId')
   @UseGuards(JwtGuard)
   async deleteMovieFromUserWatchlist(
-    @CurrentUser() user: UserEntity,
+    @CurrentUser() currentUser: UserEntity,
     @Param('id', ParseIntPipe) id: number,
     @Param('movieTmdbId', ParseIntPipe) movieTmdbId: number,
   ) {
     const response = await this.watchlistsService.deleteMovieFromUserWatchlist(
-      user.id,
+      currentUser.id,
       id,
       movieTmdbId,
     );
