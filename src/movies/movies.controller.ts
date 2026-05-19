@@ -1,6 +1,5 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, Param, ParseIntPipe } from '@nestjs/common';
 import { MoviesService } from '@movies/movies.service';
-import { GetMovieDetailsDto } from '@movies/dto/get-movie-details.dto';
 import { SearchMoviesDto } from '@movies/dto/search-movies.dto';
 import { returnOrThrow } from '@/common/utils/return-or-throw.utils';
 
@@ -19,10 +18,8 @@ export class MoviesController {
   }
 
   @Get(':tmdbId/details')
-  async getMovieDetails(@Query() getMovieDetailsDto: GetMovieDetailsDto) {
-    const response = await this.moviesService.getMovieDetails(
-      getMovieDetailsDto.tmdbId,
-    );
+  async getMovieDetails(@Param('tmdbId', ParseIntPipe) tmdbId: number) {
+    const response = await this.moviesService.getMovieDetails(tmdbId);
 
     return returnOrThrow(response);
   }
