@@ -4,7 +4,7 @@ import { Entity, Column, PrimaryColumn } from 'typeorm';
 @Entity()
 export class MovieEntity {
   @Expose()
-  @PrimaryColumn({ unique: true })
+  @PrimaryColumn()
   tmdbId!: number;
 
   @Expose()
@@ -32,11 +32,11 @@ export class MovieEntity {
   voteCount!: number;
 
   @Expose()
-  @Column({ type: 'int' })
+  @Column({ type: 'bigint' })
   budget!: number;
 
   @Expose()
-  @Column({ type: 'int' })
+  @Column({ type: 'bigint' })
   revenue!: number;
 
   @Expose()
