@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { WatchlistEntity } from '@watchlists/entity/watchlist.entity';
@@ -18,6 +18,8 @@ import { PgViolationCodes } from '@/common/constants/pg-violation-codes.constant
 
 @Injectable()
 export class WatchlistsService {
+  private readonly logger = new Logger(WatchlistsService.name);
+
   constructor(
     @InjectRepository(WatchlistEntity)
     private watchlistRepository: Repository<WatchlistEntity>,
@@ -50,7 +52,8 @@ export class WatchlistsService {
         status: 'success',
         data: await this.watchlistRepository.save(watchlist),
       };
-    } catch {
+    } catch (error) {
+      this.logger.error(error);
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
@@ -84,7 +87,8 @@ export class WatchlistsService {
           message: 'The watchlist has been deleted successfully.',
         },
       };
-    } catch {
+    } catch (error) {
+      this.logger.error(error);
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
@@ -124,7 +128,8 @@ export class WatchlistsService {
           items: paginatedWatchlists,
         },
       };
-    } catch {
+    } catch (error) {
+      this.logger.error(error);
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
@@ -176,7 +181,8 @@ export class WatchlistsService {
           items: paginatedWatchlistMovies,
         },
       };
-    } catch {
+    } catch (error) {
+      this.logger.error(error);
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
@@ -289,6 +295,7 @@ export class WatchlistsService {
         }
       }
 
+      this.logger.error(err);
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
@@ -326,8 +333,13 @@ export class WatchlistsService {
         };
       }
 
-      foundUserWatchlist.movies.splice(foundMovieIndex, 1);
-      await this.watchlistRepository.save(foundUserWatchlist);
+      await this.watchlistRepository
+        .createQueryBuilder()
+        .delete()
+        .from('watchlist_movies')
+        .where('watchlist_id = :watchlistId', { watchlistId })
+        .andWhere('movie_tmdb_id = :movieTmdbId', { movieTmdbId })
+        .execute();
 
       return {
         status: 'success',
@@ -336,7 +348,8 @@ export class WatchlistsService {
           message: 'Movie has been deleted from the watchlist successfully.',
         },
       };
-    } catch {
+    } catch (error) {
+      this.logger.error(error);
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
@@ -413,7 +426,8 @@ export class WatchlistsService {
           message: 'Watchlist has been updated successfully.',
         },
       };
-    } catch {
+    } catch (error) {
+      this.logger.error(error);
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
