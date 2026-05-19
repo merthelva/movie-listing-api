@@ -188,24 +188,17 @@ export class WatchlistsService {
   async addMovieToUserWatchlist(
     userId: number,
     watchlistId: number,
-    movieName: string,
+    movieTmdbId: number,
   ): Promise<GenericResponseType<SuccessResponseType>> {
     try {
       // Resolve the movie first (external API) before opening a DB transaction.
-      const searchMovieResponse =
-        await this.moviesService.searchMovies(movieName);
-      if (searchMovieResponse.status === 'error') {
-        return searchMovieResponse;
+      const movieDetailsResponse =
+        await this.moviesService.getMovieDetails(movieTmdbId);
+      if (movieDetailsResponse.status === 'error') {
+        return movieDetailsResponse;
       }
 
-      const [foundMovie] = searchMovieResponse.data.results;
-      if (!foundMovie) {
-        return {
-          code: HttpStatus.NOT_FOUND,
-          status: 'error',
-          message: `A movie with name \"${movieName}\" is not found in TMDB.`,
-        };
-      }
+      const foundMovie = movieDetailsResponse.data;
 
       const alreadyInWatchlistError = new Error(
         ErrorTokens.MOVIE_ALREADY_IN_WATCHLIST,
@@ -230,14 +223,20 @@ export class WatchlistsService {
           where: { tmdbId: foundMovie.tmdbId },
         });
         if (!movieEntity) {
-          movieEntity = manager.create(MovieEntity, {
-            tmdbId: foundMovie.tmdbId,
-            title: foundMovie.title,
-            overview: foundMovie.overview,
-            posterPath: foundMovie.posterPath ?? null,
-            releaseDate: foundMovie.releaseDate,
-            voteAverage: foundMovie.voteAverage,
-          });
+          // Instantiating MovieEntity and assigning fields
+          // prevents the TypeORM overload/type inference mismatch
+          movieEntity = new MovieEntity();
+          movieEntity.tmdbId = foundMovie.tmdbId;
+          movieEntity.title = foundMovie.title;
+          movieEntity.overview = foundMovie.overview ?? '';
+          movieEntity.posterPath = foundMovie.posterPath ?? null;
+          movieEntity.releaseDate = foundMovie.releaseDate;
+          movieEntity.voteAverage = foundMovie.voteAverage;
+          movieEntity.voteCount = foundMovie.voteCount;
+          movieEntity.budget = foundMovie.budget;
+          movieEntity.revenue = foundMovie.revenue;
+          movieEntity.runtime = foundMovie.runtime;
+          movieEntity.genres = foundMovie.genres;
           await manager.save(movieEntity);
         }
 
