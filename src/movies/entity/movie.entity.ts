@@ -1,4 +1,5 @@
 import { Expose } from 'class-transformer';
+import { Matches } from 'class-validator';
 import { Entity, Column, PrimaryColumn } from 'typeorm';
 
 @Entity()
@@ -21,6 +22,9 @@ export class MovieEntity {
 
   @Expose()
   @Column()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, {
+    message: 'releaseDate must be in format "YYYY-MM-DD" (e.g., "1970-01-01")',
+  })
   releaseDate!: string;
 
   @Expose()
