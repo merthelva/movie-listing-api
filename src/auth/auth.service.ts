@@ -1,5 +1,5 @@
 import { UserEntity } from '@users/entity/user.entity';
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
@@ -11,6 +11,8 @@ import { SuccessResponseType } from '@/common/types/success-response.type';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectRepository(UserEntity)
     private usersRepository: Repository<UserEntity>,
@@ -43,6 +45,7 @@ export class AuthService {
         data: await this.usersRepository.save(user),
       };
     } catch (error) {
+      this.logger.error(error);
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
@@ -92,6 +95,7 @@ export class AuthService {
         },
       };
     } catch (error) {
+      this.logger.error(error);
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
@@ -134,6 +138,7 @@ export class AuthService {
         },
       };
     } catch (error) {
+      this.logger.error(error);
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
