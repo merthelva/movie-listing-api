@@ -8,6 +8,7 @@ import type {
 } from '@movies/types';
 import { ConfigService } from '@nestjs/config';
 import { delayInMs } from '@/common/utils/delay-ms.utils';
+import { maxCacheSize } from './constants/max-cache-size.constant';
 
 @Injectable()
 export class MoviesService {
@@ -41,6 +42,23 @@ export class MoviesService {
       'TMDB_FETCH_TIMEOUT_MS',
       10000,
     );
+  }
+
+  private setCacheEntry(
+    key: string,
+    value: SearchMovieResultType | MovieDetailsType,
+  ) {
+    if (
+      this.cacheStoreMap.size >= maxCacheSize &&
+      !this.cacheStoreMap.has(key)
+    ) {
+      const firstKey = this.cacheStoreMap.keys().next().value as string;
+      this.cacheStoreMap.delete(firstKey);
+    }
+    this.cacheStoreMap.set(key, {
+      value,
+      expiresAt: Date.now() + this.cacheTtlMs,
+    });
   }
 
   async getMovieDetails(
@@ -93,10 +111,7 @@ export class MoviesService {
         voteCount: data.vote_count,
       };
 
-      this.cacheStoreMap.set(cacheKey, {
-        value: cachedMovieDetailsValue,
-        expiresAt: Date.now() + this.cacheTtlMs,
-      });
+      this.setCacheEntry(cacheKey, cachedMovieDetailsValue);
 
       return { status: 'success', data: cachedMovieDetailsValue };
     } catch (err) {
@@ -150,10 +165,7 @@ export class MoviesService {
         })),
       };
 
-      this.cacheStoreMap.set(cacheKey, {
-        value: cachedMovieResultsValue,
-        expiresAt: Date.now() + this.cacheTtlMs,
-      });
+      this.setCacheEntry(cacheKey, cachedMovieResultsValue);
 
       return { status: 'success', data: cachedMovieResultsValue };
     } catch (err) {
@@ -166,7 +178,7 @@ export class MoviesService {
   }
 
   private async fetchWithRetry(url: string) {
-    let lastErr: Error | null = null;
+    let lastErr = new Error('All retry attempts are failed');
     for (let attempt = 0; attempt <= this.retryAttempts; attempt++) {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), this.fetchTimeoutMs);
