@@ -2,6 +2,7 @@ import { GenericResponseType } from '@/common/types/generic-response.type';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, type FindOneOptions } from 'typeorm';
+import { hash } from 'bcrypt';
 import { UserEntity } from './entity/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PaginationDto } from '@/common/dtos/pagination.dto';
@@ -26,7 +27,7 @@ export class UsersService {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
-          message: `User with ${userId} is not found`,
+          message: 'User not found',
         };
       }
 
@@ -67,7 +68,7 @@ export class UsersService {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
-          message: `User with ${userIdToUpdate} is not found`,
+          message: 'User not found',
         };
       }
 
@@ -108,7 +109,22 @@ export class UsersService {
         };
       }
 
-      await this.usersRepository.update({ id: userIdToUpdate }, updatedFields);
+      const transformedFields = {
+        ...updatedFields,
+      };
+
+      if (updatedFields.password) {
+        transformedFields.password = await hash(updatedFields.password, 10);
+      }
+
+      if (updatedFields.email) {
+        transformedFields.email = updatedFields.email.toLowerCase();
+      }
+
+      await this.usersRepository.update(
+        { id: userIdToUpdate },
+        transformedFields,
+      );
 
       return {
         status: 'success',
@@ -187,7 +203,7 @@ export class UsersService {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
-          message: `User with ${userIdToDelete} is not found`,
+          message: 'User not found',
         };
       }
 
