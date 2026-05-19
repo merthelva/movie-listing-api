@@ -56,6 +56,15 @@ export class MoviesService {
       };
     }
 
+    if (tmdbId <= 0) {
+      return {
+        code: HttpStatus.BAD_REQUEST,
+        status: 'error',
+        message:
+          'Invalid "tmdbId" value is provided. It must be a positive integer.',
+      };
+    }
+
     const url = `${this.baseUrl}/movie/${tmdbId}`;
 
     try {
