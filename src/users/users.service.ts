@@ -1,5 +1,5 @@
 import { GenericResponseType } from '@/common/types/generic-response.type';
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, type FindOneOptions } from 'typeorm';
 import { hash } from 'bcrypt';
@@ -8,9 +8,12 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { SuccessResponseType } from '@/common/types/success-response.type';
 import { ListUsersResponseType } from './types';
+import { PgViolationCodes } from '@/common/constants/pg-violation-codes.constant';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     @InjectRepository(UserEntity)
     private usersRepository: Repository<UserEntity>,
@@ -36,6 +39,7 @@ export class UsersService {
         data: foundUser,
       };
     } catch (error) {
+      this.logger.error(error);
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
@@ -93,22 +97,6 @@ export class UsersService {
         };
       }
 
-      const hasUserWithSameEmail =
-        updatedFields.email != null &&
-        (await this.usersRepository.exists({
-          where: {
-            email: updatedFields.email.toLowerCase(),
-          },
-        }));
-      if (hasUserWithSameEmail) {
-        return {
-          code: HttpStatus.FORBIDDEN,
-          status: 'error',
-          message:
-            'A user with this email already exists. Please choose a different email.',
-        };
-      }
-
       const transformedFields = {
         ...updatedFields,
       };
@@ -121,10 +109,23 @@ export class UsersService {
         transformedFields.email = updatedFields.email.toLowerCase();
       }
 
-      await this.usersRepository.update(
-        { id: userIdToUpdate },
-        transformedFields,
-      );
+      try {
+        await this.usersRepository.update(
+          { id: userIdToUpdate },
+          transformedFields,
+        );
+      } catch (dbErr: unknown) {
+        const pgErr = dbErr as { code?: string };
+        if (pgErr.code === PgViolationCodes.UNIQUE_VIOLATION) {
+          return {
+            code: HttpStatus.FORBIDDEN,
+            status: 'error',
+            message:
+              'A user with this email already exists. Please choose a different email.',
+          };
+        }
+        throw dbErr;
+      }
 
       return {
         status: 'success',
@@ -134,6 +135,7 @@ export class UsersService {
         },
       };
     } catch (error) {
+      this.logger.error(error);
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
@@ -174,6 +176,7 @@ export class UsersService {
         },
       };
     } catch (error) {
+      this.logger.error(error);
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
@@ -217,6 +220,7 @@ export class UsersService {
         },
       };
     } catch (error) {
+      this.logger.error(error);
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',

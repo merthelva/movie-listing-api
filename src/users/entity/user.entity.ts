@@ -1,4 +1,10 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Roles } from '@/common/constants/roles.constant';
 import type { RoleType } from '@/common/types/roles.type';
 import type { WatchlistEntity } from '@watchlists/entity/watchlist.entity';
@@ -10,6 +16,7 @@ export class UserEntity {
   id!: number;
 
   @Column()
+  @Index() // efficient for db read operations for large tables
   name!: string;
 
   @Column({ unique: true })

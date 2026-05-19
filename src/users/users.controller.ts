@@ -63,12 +63,9 @@ export class UsersController {
   @RolesDecorator(Roles.ADMIN)
   async deleteUser(
     @CurrentUser() currentUser: UserEntity,
-    @Param('userIdToDelete', ParseIntPipe) userIdToDelete: number,
+    @Param('id', ParseIntPipe) id: number,
   ) {
-    const response = await this.usersService.deleteUser(
-      currentUser.id,
-      userIdToDelete,
-    );
+    const response = await this.usersService.deleteUser(currentUser.id, id);
     return returnOrThrow(response);
   }
 }
