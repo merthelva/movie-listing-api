@@ -102,7 +102,7 @@ export class WatchlistsController {
     const response = await this.watchlistsService.addMovieToUserWatchlist(
       currentUser.id,
       id,
-      addMovieDto.name,
+      addMovieDto.tmdbId,
     );
 
     return returnOrThrow(response);
