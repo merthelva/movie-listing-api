@@ -7,7 +7,7 @@ import type {
   TmdbSearchResultType,
 } from '@movies/types';
 import { ConfigService } from '@nestjs/config';
-import { delayInMs } from '@/common/utils/delay-ms';
+import { delayInMs } from '@/common/utils/delay-ms.utils';
 
 @Injectable()
 export class MoviesService {

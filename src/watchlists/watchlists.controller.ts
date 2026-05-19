@@ -16,7 +16,7 @@ import { UserEntity } from '@users/entity/user.entity';
 import { WatchlistsService } from '@watchlists/watchlists.service';
 import { CreateWatchlistDto } from '@watchlists/dto/create-watchlist.dto';
 import { AddMovieToUserWatchlistDto } from '@watchlists/dto/add-movie-to-user-watchlist.dto';
-import { returnOrThrow } from '@/common/utils/return-or-throw';
+import { returnOrThrow } from '@/common/utils/return-or-throw.utils';
 import { Serialize } from '@/common/interceptors/serialize.interceptor';
 import {
   GetAllUserWatchlistMoviesResponseDto,

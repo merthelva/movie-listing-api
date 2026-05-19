@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { UserEntity } from './entity/user.entity';
 import { UsersService } from './users.service';
-import { returnOrThrow } from '@/common/utils/return-or-throw';
+import { returnOrThrow } from '@/common/utils/return-or-throw.utils';
 import { Serialize } from '@/common/interceptors/serialize.interceptor';
 import { UserRegisterResponseDto } from './dto/user-response.dto';
 import { UpdateUserDto } from './dto/update-user.dto';

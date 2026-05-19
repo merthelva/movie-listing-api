@@ -13,7 +13,7 @@ import {
   UserLoginResponseDto,
   UserRegisterResponseDto,
 } from '@/users/dto/user-response.dto';
-import { returnOrThrow } from '@/common/utils/return-or-throw';
+import { returnOrThrow } from '@/common/utils/return-or-throw.utils';
 import { Serialize } from '@/common/interceptors/serialize.interceptor';
 
 @Controller('auth')
