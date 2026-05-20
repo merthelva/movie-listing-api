@@ -11,3 +11,8 @@ export type LoginResponseType = {
   email: string;
   role: UserEntity['role'];
 };
+
+export type CachedUserType = Pick<
+  UserEntity,
+  'id' | 'email' | 'role' | 'deletedAt'
+>;

@@ -8,6 +8,7 @@ import type {
 } from '@movies/types';
 import { ConfigService } from '@nestjs/config';
 import { delayInMs } from '@/common/utils/delay-ms.utils';
+import { TtlCache } from '@/common/utils/ttl-cache.util';
 import { maxCacheSize } from './constants/max-cache-size.constant';
 
 @Injectable()
@@ -17,10 +18,10 @@ export class MoviesService {
   private readonly cacheTtlMs: number;
   private readonly retryAttempts: number;
   private readonly fetchTimeoutMs: number;
-  private readonly cacheStoreMap = new Map<
+  private readonly cache: TtlCache<
     string,
-    { value: SearchMovieResultType | MovieDetailsType; expiresAt: number }
-  >();
+    SearchMovieResultType | MovieDetailsType
+  >;
 
   private readonly logger = new Logger(MoviesService.name);
 
@@ -44,36 +45,19 @@ export class MoviesService {
       'TMDB_FETCH_TIMEOUT_MS',
       10000,
     );
-  }
-
-  private setCacheEntry(
-    key: string,
-    value: SearchMovieResultType | MovieDetailsType,
-  ) {
-    if (
-      this.cacheStoreMap.size >= maxCacheSize &&
-      !this.cacheStoreMap.has(key)
-    ) {
-      const firstKey = this.cacheStoreMap.keys().next().value as string;
-      this.logger.warn(`Cache full. Evicting oldest entry: ${firstKey}`);
-      this.cacheStoreMap.delete(firstKey);
-    }
-    this.cacheStoreMap.set(key, {
-      value,
-      expiresAt: Date.now() + this.cacheTtlMs,
-    });
+    this.cache = new TtlCache(this.cacheTtlMs, maxCacheSize);
+    setInterval(() => this.cache.evictExpired(), this.cacheTtlMs);
   }
 
   async getMovieDetails(
     tmdbId: number,
   ): Promise<GenericResponseType<MovieDetailsType>> {
     const cacheKey = `movie:${tmdbId}`;
-    const now = Date.now();
-    const cachedMovieDetails = this.cacheStoreMap.get(cacheKey);
-    if (cachedMovieDetails && cachedMovieDetails.expiresAt > now) {
+    const cachedMovieDetails = this.cache.get(cacheKey);
+    if (cachedMovieDetails) {
       return {
         status: 'success',
-        data: cachedMovieDetails.value as MovieDetailsType,
+        data: cachedMovieDetails as MovieDetailsType,
       };
     }
 
@@ -114,7 +98,7 @@ export class MoviesService {
         voteCount: data.vote_count,
       };
 
-      this.setCacheEntry(cacheKey, cachedMovieDetailsValue);
+      this.cache.set(cacheKey, cachedMovieDetailsValue);
 
       return { status: 'success', data: cachedMovieDetailsValue };
     } catch (err) {
@@ -135,12 +119,11 @@ export class MoviesService {
     page: number = 1,
   ): Promise<GenericResponseType<SearchMovieResultType>> {
     const cacheKey = `search:${query.toLowerCase()}:${page}`;
-    const now = Date.now();
-    const cachedMovieResults = this.cacheStoreMap.get(cacheKey);
-    if (cachedMovieResults && cachedMovieResults.expiresAt > now) {
+    const cachedMovieResults = this.cache.get(cacheKey);
+    if (cachedMovieResults) {
       return {
         status: 'success',
-        data: cachedMovieResults.value as SearchMovieResultType,
+        data: cachedMovieResults as SearchMovieResultType,
       };
     }
 
@@ -172,7 +155,7 @@ export class MoviesService {
         })),
       };
 
-      this.setCacheEntry(cacheKey, cachedMovieResultsValue);
+      this.cache.set(cacheKey, cachedMovieResultsValue);
 
       return { status: 'success', data: cachedMovieResultsValue };
     } catch (err) {
