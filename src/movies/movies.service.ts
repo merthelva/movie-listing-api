@@ -76,9 +76,15 @@ export class MoviesService {
       const response = await this.fetchWithRetry(url);
       if (!response.ok) {
         return {
-          code: HttpStatus.INTERNAL_SERVER_ERROR,
+          code:
+            response.status === 404
+              ? HttpStatus.NOT_FOUND
+              : HttpStatus.INTERNAL_SERVER_ERROR,
           status: 'error',
-          message: 'An error occurred while fetching movie details from TMDB.',
+          message:
+            response.status === 404
+              ? `Movie with id ${tmdbId} is not found in TMDB.`
+              : 'An error occurred while fetching movie details from TMDB.',
         };
       }
 
@@ -133,9 +139,15 @@ export class MoviesService {
       const response = await this.fetchWithRetry(url);
       if (!response.ok) {
         return {
-          code: HttpStatus.INTERNAL_SERVER_ERROR,
+          code:
+            response.status === 404
+              ? HttpStatus.NOT_FOUND
+              : HttpStatus.INTERNAL_SERVER_ERROR,
           status: 'error',
-          message: 'An error occurred while fetching movies from TMDB.',
+          message:
+            response.status === 404
+              ? `No results found for query "${query}".`
+              : 'An error occurred while fetching movies from TMDB.',
         };
       }
 
