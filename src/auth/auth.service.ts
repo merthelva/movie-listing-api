@@ -8,6 +8,7 @@ import { LoginResponseType } from './types';
 import { GenericResponseType } from '@/common/types/generic-response.type';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { SuccessResponseType } from '@/common/types/success-response.type';
+import { Roles } from '@/common/constants/roles.constant';
 
 @Injectable()
 export class AuthService {
@@ -37,6 +38,7 @@ export class AuthService {
       const hashedPassword = await hash(createUserDto.password, 10);
       const user = this.usersRepository.create({
         ...createUserDto,
+        role: createUserDto.role ?? Roles.USER,
         email: createUserDto.email.toLowerCase(),
         password: hashedPassword,
       });

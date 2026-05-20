@@ -5,6 +5,7 @@ import {
   MinLength,
   IsIn,
   IsNotEmpty,
+  IsOptional,
 } from 'class-validator';
 import { Roles } from '@/common/constants/roles.constant';
 import type { RoleType } from '@/common/types/roles.type';
@@ -24,6 +25,7 @@ export class CreateUserDto {
   @MinLength(6)
   password!: string;
 
-  @IsIn(Object.values(Roles))
-  role!: RoleType;
+  @IsOptional()
+  @IsIn([Roles.USER])
+  role?: RoleType;
 }
