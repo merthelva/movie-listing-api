@@ -312,7 +312,6 @@ export class WatchlistsService {
     try {
       const foundUserWatchlist = await this.watchlistRepository.findOne({
         where: { id: watchlistId, user: { id: userId } },
-        relations: { movies: true },
       });
       if (!foundUserWatchlist) {
         return {
@@ -322,10 +321,12 @@ export class WatchlistsService {
         };
       }
 
-      const foundMovieIndex = foundUserWatchlist.movies.findIndex(
-        ({ tmdbId }) => tmdbId === movieTmdbId,
-      );
-      if (foundMovieIndex < 0) {
+      const [movieRow]: Array<{ exists: number }> =
+        await this.watchlistRepository.manager.query(
+          'SELECT 1 as exists FROM watchlist_movies WHERE watchlist_id = $1 AND movie_tmdb_id = $2 LIMIT 1',
+          [watchlistId, movieTmdbId],
+        );
+      if (!movieRow) {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
@@ -378,7 +379,6 @@ export class WatchlistsService {
 
       const foundUserWatchlist = await this.watchlistRepository.findOne({
         where: { id: watchlistId, user: { id: userId } },
-        relations: { movies: true },
       });
       if (!foundUserWatchlist) {
         return {
