@@ -1,5 +1,6 @@
 import { UserEntity } from '@users/entity/user.entity';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
@@ -18,6 +19,7 @@ export class AuthService {
     @InjectRepository(UserEntity)
     private usersRepository: Repository<UserEntity>,
     private jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
 
   async register(
@@ -35,7 +37,11 @@ export class AuthService {
         };
       }
 
-      const hashedPassword = await hash(createUserDto.password, 10);
+      const saltRounds = this.configService.get<number>(
+        'BCRYPT_SALT_AMOUNT',
+        14,
+      );
+      const hashedPassword = await hash(createUserDto.password, saltRounds);
       const user = this.usersRepository.create({
         ...createUserDto,
         role: createUserDto.role ?? Roles.USER,

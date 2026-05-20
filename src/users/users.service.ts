@@ -1,5 +1,6 @@
 import { GenericResponseType } from '@/common/types/generic-response.type';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { hash } from 'bcrypt';
@@ -19,6 +20,7 @@ export class UsersService {
   constructor(
     @InjectRepository(UserEntity)
     private usersRepository: Repository<UserEntity>,
+    private configService: ConfigService,
   ) {}
 
   async getCurrentUser(
@@ -101,7 +103,14 @@ export class UsersService {
       };
 
       if (updatedFields.password) {
-        transformedFields.password = await hash(updatedFields.password, 10);
+        const saltRounds = this.configService.get<number>(
+          'BCRYPT_SALT_AMOUNT',
+          14,
+        );
+        transformedFields.password = await hash(
+          updatedFields.password,
+          saltRounds,
+        );
       }
 
       if (updatedFields.email) {
