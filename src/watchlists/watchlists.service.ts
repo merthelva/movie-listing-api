@@ -15,6 +15,8 @@ import { CreateWatchlistDto } from '@watchlists/dto/create-watchlist.dto';
 import type { UpdateWatchlistDto } from './dto/update-watchlist.dto';
 import { ErrorTokens } from './constants/error-tokens.constant';
 import { PgViolationCodes } from '@/common/constants/pg-violation-codes.constant';
+import { hasNoUpdateFields } from '@/common/utils/has-no-update-fields.utils';
+import { returnPaginatedData } from '@/common/utils/return-paginated-data.utils';
 
 @Injectable()
 export class WatchlistsService {
@@ -119,14 +121,12 @@ export class WatchlistsService {
 
       return {
         status: 'success',
-        data: {
-          isFirstPage: page === 1,
-          isLastPage: skip + paginatedWatchlists.length >= totalItems,
-          limit,
-          page,
-          totalItems,
+        data: returnPaginatedData({
           items: paginatedWatchlists,
-        },
+          totalItems,
+          page,
+          limit,
+        }),
       };
     } catch (error) {
       this.logger.error(error);
@@ -172,14 +172,12 @@ export class WatchlistsService {
 
       return {
         status: 'success',
-        data: {
-          isFirstPage: page === 1,
-          isLastPage: skip + paginatedWatchlistMovies.length >= totalItems,
-          limit,
-          page,
-          totalItems,
+        data: returnPaginatedData({
           items: paginatedWatchlistMovies,
-        },
+          totalItems,
+          page,
+          limit,
+        }),
       };
     } catch (error) {
       this.logger.error(error);
@@ -366,10 +364,7 @@ export class WatchlistsService {
     updatedFields: UpdateWatchlistDto,
   ): Promise<GenericResponseType<SuccessResponseType>> {
     try {
-      if (
-        Object.keys(updatedFields).length === 0 ||
-        Object.values(updatedFields).filter(Boolean).length === 0
-      ) {
+      if (hasNoUpdateFields(updatedFields)) {
         return {
           code: HttpStatus.BAD_REQUEST,
           status: 'error',

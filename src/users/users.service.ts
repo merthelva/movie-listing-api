@@ -9,6 +9,8 @@ import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { SuccessResponseType } from '@/common/types/success-response.type';
 import { ListUsersResponseType } from './types';
 import { PgViolationCodes } from '@/common/constants/pg-violation-codes.constant';
+import { hasNoUpdateFields } from '@/common/utils/has-no-update-fields.utils';
+import { returnPaginatedData } from '@/common/utils/return-paginated-data.utils';
 
 @Injectable()
 export class UsersService {
@@ -54,10 +56,7 @@ export class UsersService {
     updatedFields: UpdateUserDto,
   ): Promise<GenericResponseType<SuccessResponseType>> {
     try {
-      if (
-        Object.keys(updatedFields).length === 0 ||
-        Object.values(updatedFields).filter(Boolean).length === 0
-      ) {
+      if (hasNoUpdateFields(updatedFields)) {
         return {
           code: HttpStatus.BAD_REQUEST,
           status: 'error',
@@ -166,14 +165,12 @@ export class UsersService {
 
       return {
         status: 'success',
-        data: {
-          isFirstPage: page === 1,
-          isLastPage: skip + paginatedUsers.length >= totalItems,
-          limit,
-          page,
-          totalItems,
+        data: returnPaginatedData({
           items: paginatedUsers,
-        },
+          totalItems,
+          page,
+          limit,
+        }),
       };
     } catch (error) {
       this.logger.error(error);
