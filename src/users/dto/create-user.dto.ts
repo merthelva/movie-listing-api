@@ -3,12 +3,8 @@ import {
   IsEmail,
   IsString,
   MinLength,
-  IsIn,
   IsNotEmpty,
-  IsOptional,
 } from 'class-validator';
-import { Roles } from '@/common/constants/roles.constant';
-import type { RoleType } from '@/common/types/roles.type';
 
 export class CreateUserDto {
   @IsString()
@@ -24,8 +20,4 @@ export class CreateUserDto {
   @IsDefined()
   @MinLength(6)
   password!: string;
-
-  @IsOptional()
-  @IsIn([Roles.USER])
-  role?: RoleType;
 }

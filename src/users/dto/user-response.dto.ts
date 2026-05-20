@@ -1,5 +1,4 @@
 import { Expose } from 'class-transformer';
-import type { RoleType } from '@/common/types/roles.type';
 
 export class UserRegisterResponseDto {
   @Expose()
@@ -10,9 +9,6 @@ export class UserRegisterResponseDto {
 
   @Expose()
   email!: string;
-
-  @Expose()
-  role!: RoleType;
 }
 
 export class UserLoginResponseDto extends UserRegisterResponseDto {

@@ -99,7 +99,6 @@ export class AuthService {
           accessToken,
           id: user.id,
           email: user.email,
-          role: user.role,
         },
       };
     } catch (error) {

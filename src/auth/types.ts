@@ -9,7 +9,6 @@ export type LoginResponseType = {
   accessToken: string;
   id: number;
   email: string;
-  role: UserEntity['role'];
 };
 
 export type CachedUserType = Pick<
