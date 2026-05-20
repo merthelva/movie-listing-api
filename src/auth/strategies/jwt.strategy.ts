@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from '@users/entity/user.entity';
-import { TtlCache } from '@/common/utils/ttl-cache.util';
+import { TtlCache } from '@/common/utils/ttl-cache.utils';
 import {
   maxUserCacheSize,
   userCacheTtlMs,

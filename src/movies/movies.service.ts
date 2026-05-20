@@ -8,7 +8,7 @@ import type {
 } from '@movies/types';
 import { ConfigService } from '@nestjs/config';
 import { delayInMs } from '@/common/utils/delay-ms.utils';
-import { TtlCache } from '@/common/utils/ttl-cache.util';
+import { TtlCache } from '@/common/utils/ttl-cache.utils';
 import { maxCacheSize } from './constants/max-cache-size.constant';
 
 @Injectable()
@@ -99,8 +99,7 @@ export class MoviesService {
         revenue: data.revenue,
         runtime: data.runtime,
         releaseDate: data.release_date,
-        voteAverage:
-          data.vote_average != null ? +data.vote_average.toFixed(1) : 0,
+        voteAverage: this.normalizeVoteAverage(data.vote_average),
         voteCount: data.vote_count,
       };
 
@@ -162,8 +161,7 @@ export class MoviesService {
           overview: item.overview,
           posterPath: item.poster_path ?? null,
           releaseDate: item.release_date,
-          voteAverage:
-            item.vote_average != null ? +item.vote_average.toFixed(1) : 0,
+          voteAverage: this.normalizeVoteAverage(item.vote_average),
         })),
       };
 
@@ -181,6 +179,10 @@ export class MoviesService {
         message: 'An error occurred while fetching movies from TMDB.',
       };
     }
+  }
+
+  private normalizeVoteAverage(value: number | null | undefined): number {
+    return value != null ? +value.toFixed(1) : 0;
   }
 
   private async fetchWithRetry(url: string) {
