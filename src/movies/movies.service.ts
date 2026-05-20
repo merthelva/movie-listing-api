@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { GenericResponseType } from '@/common/types/generic-response.type';
 import type {
   MovieDetailsType,
@@ -21,6 +21,8 @@ export class MoviesService {
     string,
     { value: SearchMovieResultType | MovieDetailsType; expiresAt: number }
   >();
+
+  private readonly logger = new Logger(MoviesService.name);
 
   constructor(private configService: ConfigService) {
     this.readAccessToken = this.configService.getOrThrow<string>(
@@ -53,6 +55,7 @@ export class MoviesService {
       !this.cacheStoreMap.has(key)
     ) {
       const firstKey = this.cacheStoreMap.keys().next().value as string;
+      this.logger.warn(`Cache full. Evicting oldest entry: ${firstKey}`);
       this.cacheStoreMap.delete(firstKey);
     }
     this.cacheStoreMap.set(key, {
@@ -115,6 +118,10 @@ export class MoviesService {
 
       return { status: 'success', data: cachedMovieDetailsValue };
     } catch (err) {
+      this.logger.error(
+        'Failed to fetch movie details from TMDB',
+        err instanceof Error ? err.stack : err,
+      );
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
@@ -169,6 +176,10 @@ export class MoviesService {
 
       return { status: 'success', data: cachedMovieResultsValue };
     } catch (err) {
+      this.logger.error(
+        'Failed to fetch movies from TMDB',
+        err instanceof Error ? err.stack : err,
+      );
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
@@ -199,6 +210,9 @@ export class MoviesService {
 
         // Retry on server errors and rate limiting
         if (response.status === 429 || response.status >= 500) {
+          this.logger.warn(
+            `TMDB responded ${response.status}. Retry attempt ${attempt + 1}/${this.retryAttempts}`,
+          );
           const retryAfter = response.headers.get('Retry-After');
           const delayMs = retryAfter
             ? parseInt(retryAfter, 10) * 1000
@@ -224,6 +238,10 @@ export class MoviesService {
             continue;
           }
         }
+        this.logger.error(
+          'fetchWithRetry exhausted all attempts',
+          err instanceof Error ? err.stack : err,
+        );
         throw lastErr;
       }
     }
