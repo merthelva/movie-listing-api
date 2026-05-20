@@ -95,7 +95,7 @@ export class MoviesService {
         overview: data.overview,
         posterPath: data.poster_path ?? null,
         budget: data.budget,
-        genres: data.genres.map((genre) => genre.name),
+        genres: (data.genres ?? []).map((genre) => genre.name),
         revenue: data.revenue,
         runtime: data.runtime,
         releaseDate: data.release_date,
