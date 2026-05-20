@@ -7,6 +7,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from '@users/dto/create-user.dto';
 import { LoginUserDto } from '@users/dto/login-user.dto';
@@ -25,6 +26,7 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('register')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Serialize(UserRegisterResponseDto)
   async register(@Body() createUserDto: CreateUserDto) {
     const response = await this.authService.register(createUserDto);
@@ -32,6 +34,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Serialize(UserLoginResponseDto)
   async login(@Body() { email, password }: LoginUserDto) {
     const response = await this.authService.login(email, password);
