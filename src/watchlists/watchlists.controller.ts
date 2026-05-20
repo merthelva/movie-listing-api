@@ -32,7 +32,6 @@ export class WatchlistsController {
   constructor(private watchlistsService: WatchlistsService) {}
 
   @Post('create')
-  @UseGuards(JwtGuard)
   @Serialize(WatchlistResponseDto)
   async createUserWatchlist(
     @CurrentUser() currentUser: UserEntity,
@@ -47,7 +46,6 @@ export class WatchlistsController {
   }
 
   @Delete('/delete/:id')
-  @UseGuards(JwtGuard)
   async deleteUserWatchlist(
     @CurrentUser() currentUser: UserEntity,
     @Param('id', ParseIntPipe) id: number,
@@ -61,7 +59,6 @@ export class WatchlistsController {
   }
 
   @Get('all')
-  @UseGuards(JwtGuard)
   @Serialize(GetAllUserWatchlistsResponseDto)
   async getAllUserWatchlists(
     @CurrentUser() currentUser: UserEntity,
@@ -76,7 +73,6 @@ export class WatchlistsController {
   }
 
   @Get(':id')
-  @UseGuards(JwtGuard)
   @Serialize(GetAllUserWatchlistMoviesResponseDto)
   async getAllUserWatchlistMovies(
     @CurrentUser() currentUser: UserEntity,
@@ -93,7 +89,6 @@ export class WatchlistsController {
   }
 
   @Post(':id/addMovie')
-  @UseGuards(JwtGuard)
   async addMovieToUserWatchlist(
     @CurrentUser() currentUser: UserEntity,
     @Param('id', ParseIntPipe) id: number,
@@ -109,7 +104,6 @@ export class WatchlistsController {
   }
 
   @Delete(':id/deleteMovie/:movieTmdbId')
-  @UseGuards(JwtGuard)
   async deleteMovieFromUserWatchlist(
     @CurrentUser() currentUser: UserEntity,
     @Param('id', ParseIntPipe) id: number,
@@ -125,7 +119,6 @@ export class WatchlistsController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtGuard)
   async updateUserWatchlistDetails(
     @CurrentUser() currentUser: UserEntity,
     @Param('id', ParseIntPipe) id: number,
