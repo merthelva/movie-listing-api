@@ -35,17 +35,6 @@ export class WatchlistsService {
     createUserWatchlistDto: CreateWatchlistDto,
   ): Promise<GenericResponseType<WatchlistEntity>> {
     try {
-      const foundUserWatchlist = await this.watchlistRepository.findOne({
-        where: { name: createUserWatchlistDto.name, user: { id: userId } },
-      });
-      if (foundUserWatchlist) {
-        return {
-          code: HttpStatus.FORBIDDEN,
-          status: 'error',
-          message: `Watchlist with name ${createUserWatchlistDto.name} for this user already exists`,
-        };
-      }
-
       const watchlist = this.watchlistRepository.create({
         name: createUserWatchlistDto.name,
         user: { id: userId },
@@ -55,6 +44,14 @@ export class WatchlistsService {
         data: await this.watchlistRepository.save(watchlist),
       };
     } catch (error) {
+      const pgErr = error as { code?: string };
+      if (pgErr.code === PgViolationCodes.UNIQUE_VIOLATION) {
+        return {
+          code: HttpStatus.FORBIDDEN,
+          status: 'error',
+          message: `Watchlist with name ${createUserWatchlistDto.name} for this user already exists`,
+        };
+      }
       this.logger.error(error);
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -211,14 +208,14 @@ export class WatchlistsService {
       // Use a DB transaction on the watchlist row
       // to make check-and-insert atomic and avoid race conditions.
       await this.watchlistRepository.manager.transaction(async (manager) => {
-        const foundWatchlist = await manager
+        const foundUserWatchlist = await manager
           .createQueryBuilder(WatchlistEntity, 'watchlist')
           .innerJoin('watchlist.user', 'user')
           .where('watchlist.id = :watchlistId', { watchlistId })
           .andWhere('user.id = :userId', { userId })
           .getOne();
 
-        if (!foundWatchlist) {
+        if (!foundUserWatchlist) {
           throw new Error(ErrorTokens.WATCHLIST_NOT_FOUND);
         }
 
@@ -395,23 +392,6 @@ export class WatchlistsService {
         };
       }
 
-      const hasUserWatchlistWithSameName =
-        updatedFields.name != null &&
-        (await this.watchlistRepository.exists({
-          where: {
-            name: updatedFields.name,
-            user: { id: userId },
-          },
-        }));
-      if (hasUserWatchlistWithSameName) {
-        return {
-          code: HttpStatus.FORBIDDEN,
-          status: 'error',
-          message:
-            'A watchlist with this name already exists for this user. Please choose a different name.',
-        };
-      }
-
       await this.watchlistRepository.update({ id: watchlistId }, updatedFields);
 
       return {
@@ -422,6 +402,14 @@ export class WatchlistsService {
         },
       };
     } catch (error) {
+      const pgErr = error as { code?: string };
+      if (pgErr.code === PgViolationCodes.UNIQUE_VIOLATION) {
+        return {
+          code: HttpStatus.FORBIDDEN,
+          status: 'error',
+          message: `Watchlist with name ${updatedFields.name} for this user already exists`,
+        };
+      }
       this.logger.error(error);
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,

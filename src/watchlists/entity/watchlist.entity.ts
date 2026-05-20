@@ -5,11 +5,13 @@ import {
   ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Unique,
 } from 'typeorm';
 import { UserEntity } from '@users/entity/user.entity';
 import { MovieEntity } from '@movies/entity/movie.entity';
 
 @Entity()
+@Unique(['name', 'user'])
 export class WatchlistEntity {
   @PrimaryGeneratedColumn()
   id!: number;
