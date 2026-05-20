@@ -38,7 +38,7 @@ export class AuthService {
       }
 
       const saltRounds = this.configService.get<number>(
-        'BCRYPT_SALT_AMOUNT',
+        'BCRYPT_SALT_ROUNDS',
         14,
       );
       const hashedPassword = await hash(createUserDto.password, saltRounds);
