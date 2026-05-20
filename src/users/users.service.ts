@@ -1,7 +1,7 @@
 import { GenericResponseType } from '@/common/types/generic-response.type';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, type FindOneOptions } from 'typeorm';
+import { Repository } from 'typeorm';
 import { hash } from 'bcrypt';
 import { UserEntity } from './entity/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -150,18 +150,16 @@ export class UsersService {
       const { page = 1, limit = 10, search } = paginationDto || {};
       const skip = (page - 1) * limit;
 
-      const where: FindOneOptions<UserEntity>['where'] = {};
+      const qb = this.usersRepository
+        .createQueryBuilder('user')
+        .skip(skip)
+        .take(limit);
 
-      if (search && search.trim() !== '') {
-        where.name = Like(`%${search}%`);
+      if (search?.trim()) {
+        qb.where('user.name LIKE :search', { search: `%${search}%` });
       }
 
-      const [paginatedUsers, totalItems] =
-        await this.usersRepository.findAndCount({
-          where,
-          skip,
-          take: limit,
-        });
+      const [paginatedUsers, totalItems] = await qb.getManyAndCount();
 
       return {
         status: 'success',
