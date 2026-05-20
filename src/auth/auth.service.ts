@@ -135,7 +135,7 @@ export class AuthService {
         };
       }
 
-      await this.usersRepository.update({ id }, { deletedAt: new Date() });
+      await this.usersRepository.delete({ id });
 
       return {
         status: 'success',

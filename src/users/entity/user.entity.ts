@@ -34,12 +34,6 @@ export class UserEntity {
   })
   createdAt!: Date;
 
-  @Column({
-    type: 'timestamp',
-    nullable: true,
-  })
-  deletedAt!: Date | null;
-
   @OneToMany('WatchlistEntity', (watchlist: WatchlistEntity) => watchlist.user)
   watchlists!: WatchlistEntity[];
 

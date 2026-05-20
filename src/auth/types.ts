@@ -13,5 +13,5 @@ export type LoginResponseType = {
 
 export type CachedUserType = Pick<
   UserEntity,
-  'id' | 'email' | 'role' | 'deletedAt'
+  'id' | 'email' | 'role'
 >;
