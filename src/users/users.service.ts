@@ -103,9 +103,9 @@ export class UsersService {
       };
 
       if (updatedFields.password) {
-        const saltRounds = this.configService.get<number>(
-          'BCRYPT_SALT_ROUNDS',
-          14,
+        const saltRounds = parseInt(
+          this.configService.get('BCRYPT_SALT_ROUNDS', '14'),
+          10,
         );
         transformedFields.password = await hash(
           updatedFields.password,

@@ -37,14 +37,14 @@ export class AuthService {
         };
       }
 
-      const saltRounds = this.configService.get<number>(
-        'BCRYPT_SALT_ROUNDS',
-        14,
+      const saltRounds = parseInt(
+        this.configService.get('BCRYPT_SALT_ROUNDS', '14'),
+        10,
       );
       const hashedPassword = await hash(createUserDto.password, saltRounds);
       const user = this.usersRepository.create({
         ...createUserDto,
-        role: createUserDto.role ?? Roles.USER,
+        role: Roles.USER,
         email: createUserDto.email.toLowerCase(),
         password: hashedPassword,
       });
