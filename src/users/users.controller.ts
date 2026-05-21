@@ -59,7 +59,7 @@ export class UsersController {
     return returnOrThrow(response);
   }
 
-  @Patch(':id/role')
+  @Patch('/updateRole/:id')
   @UseGuards(JwtGuard, RolesGuard)
   @RolesDecorator(Roles.ADMIN)
   async updateUserRole(
