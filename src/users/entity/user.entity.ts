@@ -8,7 +8,7 @@ import {
 import { Roles } from '@/common/constants/roles.constant';
 import type { RoleType } from '@/common/types/roles.type';
 import type { WatchlistEntity } from '@watchlists/entity/watchlist.entity';
-// import type { FavoriteListEntity } from '@favorites/entity/favorite-list.entity';
+import type { FavoritelistEntity } from '@favoritelists/entity/favoritelist.entity';
 
 @Entity()
 export class UserEntity {
@@ -40,9 +40,9 @@ export class UserEntity {
   @OneToMany('WatchlistEntity', (watchlist: WatchlistEntity) => watchlist.user)
   watchlists!: WatchlistEntity[];
 
-  // @OneToMany(
-  //   'FavoriteListEntity',
-  //   (favoriteList: FavoriteListEntity) => favoriteList.user,
-  // )
-  // favoriteLists!: FavoriteListEntity[];
+  @OneToMany(
+    'FavoritelistEntity',
+    (favoritelist: FavoritelistEntity) => favoritelist.user,
+  )
+  favoritelists!: FavoritelistEntity[];
 }
