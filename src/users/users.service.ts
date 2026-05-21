@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import { hash } from 'bcrypt';
 import { UserEntity } from './entity/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { RoleType } from '@/common/types/roles.type';
 import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { SuccessResponseType } from '@/common/types/success-response.type';
 import { ListUsersResponseType } from './types';
@@ -185,6 +186,61 @@ export class UsersService {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
         message: 'An error occurred while getting the users.',
+      };
+    }
+  }
+
+  async updateUserRole(
+    currentUserId: number,
+    userIdToUpdate: number,
+    newRole: RoleType,
+  ): Promise<GenericResponseType<SuccessResponseType>> {
+    try {
+      if (currentUserId === userIdToUpdate) {
+        return {
+          code: HttpStatus.FORBIDDEN,
+          status: 'error',
+          message: 'User cannot change (his/her) own role.',
+        };
+      }
+
+      const foundUser = await this.usersRepository.findOne({
+        where: { id: userIdToUpdate },
+      });
+      if (!foundUser) {
+        return {
+          code: HttpStatus.NOT_FOUND,
+          status: 'error',
+          message: 'User not found',
+        };
+      }
+
+      if (foundUser.role === newRole) {
+        return {
+          code: HttpStatus.BAD_REQUEST,
+          status: 'error',
+          message: `The user already has the role of "${newRole}". Please provide a different role to update.`,
+        };
+      }
+
+      await this.usersRepository.update(
+        { id: userIdToUpdate },
+        { role: newRole },
+      );
+
+      return {
+        status: 'success',
+        data: {
+          success: true,
+          message: 'User role has been updated successfully.',
+        },
+      };
+    } catch (error) {
+      this.logger.error(error);
+      return {
+        code: HttpStatus.INTERNAL_SERVER_ERROR,
+        status: 'error',
+        message: 'An error occurred while updating the user role.',
       };
     }
   }

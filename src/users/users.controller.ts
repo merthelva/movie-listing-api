@@ -22,6 +22,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { Roles } from '@/common/constants/roles.constant';
 import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { GetAllUsersResponseDto } from './dto/get-all-users.response.dto';
+import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 @Controller('users')
 export class UsersController {
   constructor(private usersService: UsersService) {}
@@ -55,6 +56,22 @@ export class UsersController {
   @Serialize(GetAllUsersResponseDto)
   async getAllUsers(@Query() paginationDto: PaginationDto) {
     const response = await this.usersService.getAllUsers(paginationDto);
+    return returnOrThrow(response);
+  }
+
+  @Patch(':id/role')
+  @UseGuards(JwtGuard, RolesGuard)
+  @RolesDecorator(Roles.ADMIN)
+  async updateUserRole(
+    @CurrentUser() currentUser: UserEntity,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateUserRoleDto: UpdateUserRoleDto,
+  ) {
+    const response = await this.usersService.updateUserRole(
+      currentUser.id,
+      id,
+      updateUserRoleDto.role,
+    );
     return returnOrThrow(response);
   }
 
