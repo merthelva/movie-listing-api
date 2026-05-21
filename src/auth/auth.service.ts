@@ -10,7 +10,7 @@ import { GenericResponseType } from '@/common/types/generic-response.type';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { SuccessResponseType } from '@/common/types/success-response.type';
 import { Roles } from '@/common/constants/roles.constant';
-import { JwtStrategy } from './strategies/jwt.strategy';
+import { UserCacheService } from '@/users/user-cache.service';
 
 @Injectable()
 export class AuthService {
@@ -21,7 +21,7 @@ export class AuthService {
     private usersRepository: Repository<UserEntity>,
     private jwtService: JwtService,
     private configService: ConfigService,
-    private jwtStrategy: JwtStrategy,
+    private userCacheService: UserCacheService,
   ) {}
 
   async register(
@@ -118,7 +118,7 @@ export class AuthService {
   ): Promise<GenericResponseType<SuccessResponseType>> {
     try {
       await this.usersRepository.increment({ id: userId }, 'tokenVersion', 1);
-      this.jwtStrategy.invalidateCache(userId);
+      this.userCacheService.invalidate(userId);
       return {
         status: 'success',
         data: {
@@ -161,6 +161,7 @@ export class AuthService {
       }
 
       await this.usersRepository.delete({ id });
+      this.userCacheService.invalidate(id);
 
       return {
         status: 'success',

@@ -13,6 +13,7 @@ import { ListUsersResponseType } from './types';
 import { PgViolationCodes } from '@/common/constants/pg-violation-codes.constant';
 import { hasNoUpdateFields } from '@/common/utils/has-no-update-fields.utils';
 import { returnPaginatedData } from '@/common/utils/return-paginated-data.utils';
+import { UserCacheService } from './user-cache.service';
 
 @Injectable()
 export class UsersService {
@@ -22,6 +23,7 @@ export class UsersService {
     @InjectRepository(UserEntity)
     private usersRepository: Repository<UserEntity>,
     private configService: ConfigService,
+    private userCacheService: UserCacheService,
   ) {}
 
   async getCurrentUser(
@@ -271,6 +273,7 @@ export class UsersService {
       }
 
       await this.usersRepository.remove(foundUser);
+      this.userCacheService.invalidate(userIdToDelete);
 
       return {
         status: 'success',

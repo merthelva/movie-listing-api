@@ -5,36 +5,27 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from '@users/entity/user.entity';
-import { TtlCache } from '@/common/utils/ttl-cache.utils';
-import {
-  maxUserCacheSize,
-  userCacheTtlMs,
-} from '@/auth/constants/user-cache.constant';
 import { JwtPayloadType, CachedUserType } from '@/auth/types';
+import { UserCacheService } from '@/users/user-cache.service';
 
 // Validates JWT tokens and extracts user information from them.
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  private readonly userCache = new TtlCache<number, CachedUserType>(
-    userCacheTtlMs,
-    maxUserCacheSize,
-  );
-
   constructor(
     private configService: ConfigService,
     @InjectRepository(UserEntity)
     private usersRepository: Repository<UserEntity>,
+    private userCacheService: UserCacheService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: configService.get<string>('JWT_SECRET') ?? '',
     });
-    setInterval(() => this.userCache.evictExpired(), userCacheTtlMs);
   }
 
   async validate(payload: JwtPayloadType): Promise<CachedUserType> {
-    const cachedUser = this.userCache.get(payload.sub);
+    const cachedUser = this.userCacheService.get(payload.sub);
     if (cachedUser) {
       if (cachedUser.tokenVersion !== payload.tokenVersion) {
         throw new UnauthorizedException('Token has been invalidated');
@@ -53,11 +44,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Token has been invalidated');
     }
 
-    this.userCache.set(payload.sub, foundUser);
+    this.userCacheService.set(payload.sub, foundUser);
     return foundUser;
-  }
-
-  invalidateCache(userId: number): void {
-    this.userCache.delete(userId);
   }
 }
