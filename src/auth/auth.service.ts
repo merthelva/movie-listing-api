@@ -10,6 +10,7 @@ import { GenericResponseType } from '@/common/types/generic-response.type';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { SuccessResponseType } from '@/common/types/success-response.type';
 import { Roles } from '@/common/constants/roles.constant';
+import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +21,7 @@ export class AuthService {
     private usersRepository: Repository<UserEntity>,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private jwtStrategy: JwtStrategy,
   ) {}
 
   async register(
@@ -87,10 +89,10 @@ export class AuthService {
         };
       }
 
-      // Generate JWT token with user id and email in payload
       const accessToken = this.jwtService.sign({
         sub: user.id,
         email: user.email,
+        tokenVersion: user.tokenVersion,
       });
 
       return {
@@ -107,6 +109,29 @@ export class AuthService {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
         message: 'An error occurred while logging the user in.',
+      };
+    }
+  }
+
+  async logout(
+    userId: number,
+  ): Promise<GenericResponseType<SuccessResponseType>> {
+    try {
+      await this.usersRepository.increment({ id: userId }, 'tokenVersion', 1);
+      this.jwtStrategy.invalidateCache(userId);
+      return {
+        status: 'success',
+        data: {
+          success: true,
+          message: 'User has been logged out successfully.',
+        },
+      };
+    } catch (error) {
+      this.logger.error(error);
+      return {
+        code: HttpStatus.INTERNAL_SERVER_ERROR,
+        status: 'error',
+        message: 'An error occurred while logging out.',
       };
     }
   }

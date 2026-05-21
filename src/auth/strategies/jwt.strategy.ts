@@ -34,20 +34,30 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayloadType): Promise<CachedUserType> {
-    const cachedUserEntity = this.userCache.get(payload.sub);
-    if (cachedUserEntity) {
-      return cachedUserEntity;
+    const cachedUser = this.userCache.get(payload.sub);
+    if (cachedUser) {
+      if (cachedUser.tokenVersion !== payload.tokenVersion) {
+        throw new UnauthorizedException('Token has been invalidated');
+      }
+      return cachedUser;
     }
 
     const foundUser = await this.usersRepository.findOne({
       where: { id: payload.sub },
-      select: { id: true, email: true, role: true },
+      select: { id: true, email: true, role: true, tokenVersion: true },
     });
     if (!foundUser) {
       throw new UnauthorizedException('User not found');
     }
+    if (foundUser.tokenVersion !== payload.tokenVersion) {
+      throw new UnauthorizedException('Token has been invalidated');
+    }
 
     this.userCache.set(payload.sub, foundUser);
     return foundUser;
+  }
+
+  invalidateCache(userId: number): void {
+    this.userCache.delete(userId);
   }
 }

@@ -22,6 +22,10 @@ export class TtlCache<K, V> {
     this.store.set(key, { value, expiresAt: Date.now() + this.ttlMs });
   }
 
+  delete(key: K): void {
+    this.store.delete(key);
+  }
+
   evictExpired(): void {
     const now = Date.now();
     for (const [key, entry] of this.store) {

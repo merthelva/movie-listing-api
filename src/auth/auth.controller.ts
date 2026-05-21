@@ -41,6 +41,13 @@ export class AuthController {
     return returnOrThrow(response);
   }
 
+  @Post('logout')
+  @UseGuards(JwtGuard)
+  async logout(@CurrentUser() currentUser: UserEntity) {
+    const response = await this.authService.logout(currentUser.id);
+    return returnOrThrow(response);
+  }
+
   @Delete('/remove/:id')
   @UseGuards(JwtGuard)
   async removeAccount(

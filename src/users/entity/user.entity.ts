@@ -28,6 +28,9 @@ export class UserEntity {
   @Column({ default: Roles.USER })
   role!: RoleType;
 
+  @Column({ default: 1 })
+  tokenVersion!: number;
+
   @Column({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
