@@ -15,6 +15,7 @@
     "outDir": "./dist",
     "paths": {
       "@auth/*": ["./src/auth/*"],
+      "@health/*": ["./src/health/*"],
       "@users/*": ["./src/users/*"],
       "@movies/*": ["./src/movies/*"],
       "@watchlists/*": ["./src/watchlists/*"],
