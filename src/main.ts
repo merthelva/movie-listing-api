@@ -11,6 +11,7 @@ import { TimeoutInterceptor } from '@/common/interceptors/timeout.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.enableShutdownHooks();
   app.use(json({ limit: '1mb' }));
   app.useGlobalPipes(
     new ValidationPipe({

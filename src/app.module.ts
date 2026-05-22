@@ -4,11 +4,11 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { AppController } from '@/app.controller';
 import { SeedModule } from '@/seed/seed.module';
 import { AuthModule } from '@auth/auth.module';
 import { FavoritelistEntity } from '@favoritelists/entity/favoritelist.entity';
 import { FavoritelistsModule } from '@favoritelists/favoritelists.module';
+import { HealthModule } from '@health/health.module';
 import { MovieEntity } from '@movies/entity/movie.entity';
 import { MoviesModule } from '@movies/movies.module';
 import { UserEntity } from '@users/entity/user.entity';
@@ -21,7 +21,7 @@ import { WatchlistsModule } from '@watchlists/watchlists.module';
     ThrottlerModule.forRoot([{ limit: 60, ttl: 60_000 }]),
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env.development', // TODO: change to .env.production in production environment
+      envFilePath: `.env.${process.env.NODE_ENV}`,
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -33,9 +33,14 @@ import { WatchlistsModule } from '@watchlists/watchlists.module';
         username: configService.get<string>('DB_USERNAME', 'postgres'),
         password: configService.get<string>('DB_PASSWORD', 'password'),
         database: configService.get<string>('DB_NAME', 'task_manager'),
-        entities: [UserEntity, WatchlistEntity, MovieEntity, FavoritelistEntity],
-        synchronize: true,
-        logging: true,
+        entities: [
+          UserEntity,
+          WatchlistEntity,
+          MovieEntity,
+          FavoritelistEntity,
+        ],
+        synchronize: process.env.NODE_ENV !== 'production',
+        logging: process.env.NODE_ENV !== 'production',
       }),
     }),
     AuthModule,
@@ -44,8 +49,8 @@ import { WatchlistsModule } from '@watchlists/watchlists.module';
     WatchlistsModule,
     FavoritelistsModule,
     SeedModule,
+    HealthModule,
   ],
-  controllers: [AppController],
   providers: [
     {
       provide: APP_GUARD,
