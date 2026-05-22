@@ -149,15 +149,27 @@ export class AuthService {
         };
       }
 
-      const user = await this.usersRepository.findOne({
-        where: { id },
-      });
-      if (!user) {
+      const foundUser = await this.usersRepository.findOne({ where: { id } });
+      if (!foundUser) {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
           message: 'User not found',
         };
+      }
+
+      if (foundUser.role === Roles.ADMIN) {
+        const adminCount = await this.usersRepository.count({
+          where: { role: Roles.ADMIN },
+        });
+        if (adminCount === 1) {
+          return {
+            code: HttpStatus.FORBIDDEN,
+            status: 'error',
+            message:
+              'The account cannot be removed because it is the only admin account. Please assign another user as admin before deleting this account.',
+          };
+        }
       }
 
       await this.usersRepository.delete({ id });

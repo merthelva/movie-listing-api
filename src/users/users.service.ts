@@ -14,6 +14,7 @@ import { PgViolationCodes } from '@/common/constants/pg-violation-codes.constant
 import { hasNoUpdateFields } from '@/common/utils/has-no-update-fields.utils';
 import { returnPaginatedData } from '@/common/utils/return-paginated-data.utils';
 import { UserCacheService } from './user-cache.service';
+import { Roles } from '@/common/constants/roles.constant';
 
 @Injectable()
 export class UsersService {
@@ -270,6 +271,20 @@ export class UsersService {
           status: 'error',
           message: 'User not found',
         };
+      }
+
+      if (foundUser.role === Roles.ADMIN) {
+        const adminCount = await this.usersRepository.count({
+          where: { role: Roles.ADMIN },
+        });
+        if (adminCount === 1) {
+          return {
+            code: HttpStatus.FORBIDDEN,
+            status: 'error',
+            message:
+              'The account cannot be removed because it is the only admin account. Please assign another user as admin before deleting this account.',
+          };
+        }
       }
 
       await this.usersRepository.remove(foundUser);
