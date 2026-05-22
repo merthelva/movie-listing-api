@@ -5,6 +5,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { SeedModule } from '@/seed/seed.module';
+import { envValidationSchema } from '@/config/env.validation';
 import { AuthModule } from '@auth/auth.module';
 import { FavoritelistEntity } from '@favoritelists/entity/favoritelist.entity';
 import { FavoritelistsModule } from '@favoritelists/favoritelists.module';
@@ -22,6 +23,7 @@ import { WatchlistsModule } from '@watchlists/watchlists.module';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV}`,
+      validationSchema: envValidationSchema,
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
