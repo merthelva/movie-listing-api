@@ -1,3 +1,4 @@
+import helmet from 'helmet';
 import 'reflect-metadata';
 
 import { ValidationPipe } from '@nestjs/common';
@@ -28,6 +29,7 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     credentials: true,
   });
+  app.use(helmet()); // TODO: Verify headers are present after production deployment: ex: `curl -I https://api.yourdomain.com/api/health`
   const port = configService.get<number>('PORT', 3000);
   await app.listen(port);
 }
