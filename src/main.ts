@@ -23,6 +23,11 @@ async function bootstrap() {
   app.useGlobalInterceptors(new TimeoutInterceptor());
   app.setGlobalPrefix('api');
   const configService = app.get(ConfigService);
+  app.enableCors({
+    origin: configService.get<string>('CORS_ORIGIN'),
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    credentials: true,
+  });
   const port = configService.get<number>('PORT', 3000);
   await app.listen(port);
 }
