@@ -5,10 +5,11 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+
 import { Roles } from '@/common/constants/roles.constant';
 import type { RoleType } from '@/common/types/roles.type';
-import type { WatchlistEntity } from '@watchlists/entity/watchlist.entity';
-import type { FavoritelistEntity } from '@favoritelists/entity/favoritelist.entity';
+import type { FavoritelistEntity } from '@/favoritelists/entity/favoritelist.entity';
+import type { WatchlistEntity } from '@/watchlists/entity/watchlist.entity';
 
 @Entity()
 export class UserEntity {

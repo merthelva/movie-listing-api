@@ -1,16 +1,8 @@
 import { Expose, Type } from 'class-transformer';
+
 import { UserRegisterResponseDto } from './user-response.dto';
 
 export class GetAllUsersResponseDto {
-  @Expose()
-  page!: number;
-
-  @Expose()
-  limit!: number;
-
-  @Expose()
-  totalItems!: number;
-
   @Expose()
   isFirstPage!: boolean;
 
@@ -20,4 +12,13 @@ export class GetAllUsersResponseDto {
   @Expose()
   @Type(() => UserRegisterResponseDto)
   items!: Array<UserRegisterResponseDto>;
+
+  @Expose()
+  limit!: number;
+
+  @Expose()
+  page!: number;
+
+  @Expose()
+  totalItems!: number;
 }

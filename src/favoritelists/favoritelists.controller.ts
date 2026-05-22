@@ -10,21 +10,22 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { JwtGuard } from '@auth/guards/jwt.guard';
+
+import { JwtGuard } from '@/auth/guards/jwt.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { UserEntity } from '@users/entity/user.entity';
-import { FavoritelistsService } from '@favoritelists/favoritelists.service';
-import { CreateFavoritelistDto } from '@favoritelists/dto/create-favoritelist.dto';
-import { AddMovieToUserFavoritelistDto } from '@favoritelists/dto/add-movie-to-user-favoritelist.dto';
-import { returnOrThrow } from '@/common/utils/return-or-throw.utils';
+import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { Serialize } from '@/common/interceptors/serialize.interceptor';
+import { returnOrThrow } from '@/common/utils/return-or-throw.utils';
+import { AddMovieToUserFavoritelistDto } from '@favoritelists/dto/add-movie-to-user-favoritelist.dto';
+import { CreateFavoritelistDto } from '@favoritelists/dto/create-favoritelist.dto';
+import { UpdateFavoritelistDto } from './dto/update-favoritelist.dto';
 import {
   GetAllUserFavoritelistMoviesResponseDto,
   GetAllUserFavoritelistsResponseDto,
   FavoritelistResponseDto,
 } from '@favoritelists/dto/favoritelist-response.dto';
-import { PaginationDto } from '@/common/dtos/pagination.dto';
-import { UpdateFavoritelistDto } from './dto/update-favoritelist.dto';
+import { UserEntity } from '@/users/entity/user.entity';
+import { FavoritelistsService } from '@favoritelists/favoritelists.service';
 
 @Controller('favoritelists')
 @UseGuards(JwtGuard)

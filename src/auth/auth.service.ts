@@ -1,16 +1,18 @@
-import { UserEntity } from '@users/entity/user.entity';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+
 import { compare, hash } from 'bcrypt';
-import { LoginResponseType } from './types';
-import { GenericResponseType } from '@/common/types/generic-response.type';
-import { CreateUserDto } from '@/users/dto/create-user.dto';
-import { SuccessResponseType } from '@/common/types/success-response.type';
+import { Repository } from 'typeorm';
+
 import { Roles } from '@/common/constants/roles.constant';
+import { GenericResponseType } from '@/common/types/generic-response.type';
+import { SuccessResponseType } from '@/common/types/success-response.type';
+import { CreateUserDto } from '@/users/dto/create-user.dto';
+import { UserEntity } from '@/users/entity/user.entity';
 import { UserCacheService } from '@/users/user-cache.service';
+import { LoginResponseType } from './types';
 
 @Injectable()
 export class AuthService {

@@ -1,5 +1,5 @@
-import type { GenericResponseType } from '../types/generic-response.type';
 import { throwError } from './throw-error.utils';
+import type { GenericResponseType } from '@/common/types/generic-response.type';
 
 export function returnOrThrow<T>(response: GenericResponseType<T>): T {
   if (response.status === 'error') {

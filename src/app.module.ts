@@ -1,19 +1,20 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { APP_GUARD } from '@nestjs/core';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { AuthModule } from '@auth/auth.module';
-import { UsersModule } from '@users/users.module';
-import { UserEntity } from '@users/entity/user.entity';
-import { WatchlistEntity } from '@watchlists/entity/watchlist.entity';
-import { FavoritelistEntity } from '@favoritelists/entity/favoritelist.entity';
-import { MoviesModule } from '@movies/movies.module';
-import { WatchlistsModule } from '@watchlists/watchlists.module';
-import { MovieEntity } from '@movies/entity/movie.entity';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { AppController } from '@/app.controller';
 import { SeedModule } from '@/seed/seed.module';
+import { AuthModule } from '@auth/auth.module';
+import { FavoritelistEntity } from '@favoritelists/entity/favoritelist.entity';
 import { FavoritelistsModule } from '@favoritelists/favoritelists.module';
+import { MovieEntity } from '@movies/entity/movie.entity';
+import { MoviesModule } from '@movies/movies.module';
+import { UserEntity } from '@users/entity/user.entity';
+import { UsersModule } from '@users/users.module';
+import { WatchlistEntity } from '@watchlists/entity/watchlist.entity';
+import { WatchlistsModule } from '@watchlists/watchlists.module';
 
 @Module({
   imports: [

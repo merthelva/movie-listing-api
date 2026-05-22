@@ -1,22 +1,24 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+
 import { Repository } from 'typeorm';
-import { WatchlistEntity } from '@watchlists/entity/watchlist.entity';
-import { MovieEntity } from '@movies/entity/movie.entity';
-import { MoviesService } from '@movies/movies.service';
+
+import { PgViolationCodes } from '@/common/constants/pg-violation-codes.constant';
+import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { GenericResponseType } from '@/common/types/generic-response.type';
 import { SuccessResponseType } from '@/common/types/success-response.type';
-import { PaginationDto } from '@/common/dtos/pagination.dto';
+import { hasNoUpdateFields } from '@/common/utils/has-no-update-fields.utils';
+import { returnPaginatedData } from '@/common/utils/return-paginated-data.utils';
+import { MovieEntity } from '@movies/entity/movie.entity';
+import { MoviesService } from '@movies/movies.service';
+import { CreateWatchlistDto } from '@watchlists/dto/create-watchlist.dto';
+import { UpdateWatchlistDto } from './dto/update-watchlist.dto';
+import { ErrorTokens } from './constants/error-tokens.constant';
+import { WatchlistEntity } from '@watchlists/entity/watchlist.entity';
 import {
   ListUserWatchlistMoviesResponseType,
   ListUserWatchlistsResponseType,
 } from '@watchlists/types';
-import { CreateWatchlistDto } from '@watchlists/dto/create-watchlist.dto';
-import { UpdateWatchlistDto } from './dto/update-watchlist.dto';
-import { ErrorTokens } from './constants/error-tokens.constant';
-import { PgViolationCodes } from '@/common/constants/pg-violation-codes.constant';
-import { hasNoUpdateFields } from '@/common/utils/has-no-update-fields.utils';
-import { returnPaginatedData } from '@/common/utils/return-paginated-data.utils';
 
 @Injectable()
 export class WatchlistsService {

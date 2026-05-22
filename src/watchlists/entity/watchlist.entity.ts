@@ -7,8 +7,9 @@ import {
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
-import { UserEntity } from '@users/entity/user.entity';
-import { MovieEntity } from '@movies/entity/movie.entity';
+
+import { MovieEntity } from '@/movies/entity/movie.entity';
+import { UserEntity } from '@/users/entity/user.entity';
 
 @Entity()
 @Unique(['name', 'user'])

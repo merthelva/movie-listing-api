@@ -1,5 +1,6 @@
 import { Expose, Type } from 'class-transformer';
-import { MovieEntity } from '@movies/entity/movie.entity';
+
+import { MovieEntity } from '@/movies/entity/movie.entity';
 
 export class FavoritelistResponseDto {
   @Expose()

@@ -1,15 +1,16 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+
+import { delayInMs } from '@/common/utils/delay-ms.utils';
 import { GenericResponseType } from '@/common/types/generic-response.type';
+import { TtlCache } from '@/common/utils/ttl-cache.utils';
+import { maxCacheSize } from './constants/max-cache-size.constant';
 import type {
   MovieDetailsType,
   SearchMovieResultType,
   TmdbMovieDetailType,
   TmdbSearchResultType,
 } from '@movies/types';
-import { ConfigService } from '@nestjs/config';
-import { delayInMs } from '@/common/utils/delay-ms.utils';
-import { TtlCache } from '@/common/utils/ttl-cache.utils';
-import { maxCacheSize } from './constants/max-cache-size.constant';
 
 @Injectable()
 export class MoviesService {

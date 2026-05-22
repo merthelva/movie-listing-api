@@ -1,10 +1,13 @@
 import 'reflect-metadata';
-import { NestFactory } from '@nestjs/core';
-import { ConfigService } from '@nestjs/config';
-import { AppModule } from './app.module';
+
 import { ValidationPipe } from '@nestjs/common';
-import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
+import { ConfigService } from '@nestjs/config';
+import { NestFactory } from '@nestjs/core';
+
 import { json } from 'express';
+
+import { AppModule } from '@/app.module';
+import { TimeoutInterceptor } from '@/common/interceptors/timeout.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

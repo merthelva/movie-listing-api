@@ -8,18 +8,19 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
+
 import { AuthService } from './auth.service';
-import { CreateUserDto } from '@users/dto/create-user.dto';
-import { LoginUserDto } from '@users/dto/login-user.dto';
+import { JwtGuard } from './guards/jwt.guard';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { Serialize } from '@/common/interceptors/serialize.interceptor';
+import { returnOrThrow } from '@/common/utils/return-or-throw.utils';
+import { CreateUserDto } from '@/users/dto/create-user.dto';
+import { LoginUserDto } from '@/users/dto/login-user.dto';
 import {
   UserLoginResponseDto,
   UserRegisterResponseDto,
 } from '@/users/dto/user-response.dto';
-import { returnOrThrow } from '@/common/utils/return-or-throw.utils';
-import { Serialize } from '@/common/interceptors/serialize.interceptor';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { UserEntity } from '@users/entity/user.entity';
-import { JwtGuard } from './guards/jwt.guard';
+import { UserEntity } from '@/users/entity/user.entity';
 
 @Controller('auth')
 export class AuthController {

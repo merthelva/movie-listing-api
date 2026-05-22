@@ -1,14 +1,15 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
+import { PassportStrategy } from '@nestjs/passport';
+
+import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Repository } from 'typeorm';
-import { UserEntity } from '@users/entity/user.entity';
+
 import { JwtPayloadType, CachedUserType } from '@/auth/types';
+import { UserEntity } from '@/users/entity/user.entity';
 import { UserCacheService } from '@/users/user-cache.service';
 
-// Validates JWT tokens and extracts user information from them.
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(

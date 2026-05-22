@@ -1,7 +1,8 @@
 import { Controller, Get, Query, Param, ParseIntPipe } from '@nestjs/common';
-import { MoviesService } from '@movies/movies.service';
-import { SearchMoviesDto } from '@movies/dto/search-movies.dto';
+
 import { returnOrThrow } from '@/common/utils/return-or-throw.utils';
+import { SearchMoviesDto } from '@movies/dto/search-movies.dto';
+import { MoviesService } from '@movies/movies.service';
 
 @Controller('movies')
 export class MoviesController {

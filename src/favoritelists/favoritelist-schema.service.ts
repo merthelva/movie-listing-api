@@ -1,7 +1,8 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+
+import { MovieEntity } from '@/movies/entity/movie.entity';
 import { FavoritelistEntity } from './entity/favoritelist.entity';
-import { MovieEntity } from '@movies/entity/movie.entity';
 
 @Injectable()
 export class FavoritelistSchemaService implements OnModuleInit {

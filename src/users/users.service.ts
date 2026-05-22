@@ -1,20 +1,22 @@
-import { GenericResponseType } from '@/common/types/generic-response.type';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+
 import { hash } from 'bcrypt';
-import { UserEntity } from './entity/user.entity';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { RoleType } from '@/common/types/roles.type';
-import { PaginationDto } from '@/common/dtos/pagination.dto';
-import { SuccessResponseType } from '@/common/types/success-response.type';
-import { ListUsersResponseType } from './types';
+import { Repository } from 'typeorm';
+
+import { Roles } from '@/common/constants/roles.constant';
 import { PgViolationCodes } from '@/common/constants/pg-violation-codes.constant';
+import { PaginationDto } from '@/common/dtos/pagination.dto';
+import { GenericResponseType } from '@/common/types/generic-response.type';
+import { RoleType } from '@/common/types/roles.type';
+import { SuccessResponseType } from '@/common/types/success-response.type';
 import { hasNoUpdateFields } from '@/common/utils/has-no-update-fields.utils';
 import { returnPaginatedData } from '@/common/utils/return-paginated-data.utils';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UserEntity } from './entity/user.entity';
+import { ListUsersResponseType } from './types';
 import { UserCacheService } from './user-cache.service';
-import { Roles } from '@/common/constants/roles.constant';
 
 @Injectable()
 export class UsersService {

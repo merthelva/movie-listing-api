@@ -10,21 +10,22 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { JwtGuard } from '@auth/guards/jwt.guard';
+
+import { JwtGuard } from '@/auth/guards/jwt.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { UserEntity } from '@users/entity/user.entity';
-import { WatchlistsService } from '@watchlists/watchlists.service';
-import { CreateWatchlistDto } from '@watchlists/dto/create-watchlist.dto';
-import { AddMovieToUserWatchlistDto } from '@watchlists/dto/add-movie-to-user-watchlist.dto';
-import { returnOrThrow } from '@/common/utils/return-or-throw.utils';
+import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { Serialize } from '@/common/interceptors/serialize.interceptor';
+import { returnOrThrow } from '@/common/utils/return-or-throw.utils';
+import { AddMovieToUserWatchlistDto } from '@watchlists/dto/add-movie-to-user-watchlist.dto';
+import { CreateWatchlistDto } from '@watchlists/dto/create-watchlist.dto';
+import { UpdateWatchlistDto } from './dto/update-watchlist.dto';
 import {
   GetAllUserWatchlistMoviesResponseDto,
   GetAllUserWatchlistsResponseDto,
   WatchlistResponseDto,
 } from '@watchlists/dto/watchlist-response.dto';
-import { PaginationDto } from '@/common/dtos/pagination.dto';
-import { UpdateWatchlistDto } from './dto/update-watchlist.dto';
+import { UserEntity } from '@/users/entity/user.entity';
+import { WatchlistsService } from '@watchlists/watchlists.service';
 
 @Controller('watchlists')
 @UseGuards(JwtGuard)
