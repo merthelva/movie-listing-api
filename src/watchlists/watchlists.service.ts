@@ -7,12 +7,12 @@ import { MoviesService } from '@movies/movies.service';
 import { GenericResponseType } from '@/common/types/generic-response.type';
 import { SuccessResponseType } from '@/common/types/success-response.type';
 import { PaginationDto } from '@/common/dtos/pagination.dto';
-import type {
+import {
   ListUserWatchlistMoviesResponseType,
   ListUserWatchlistsResponseType,
 } from '@watchlists/types';
 import { CreateWatchlistDto } from '@watchlists/dto/create-watchlist.dto';
-import type { UpdateWatchlistDto } from './dto/update-watchlist.dto';
+import { UpdateWatchlistDto } from './dto/update-watchlist.dto';
 import { ErrorTokens } from './constants/error-tokens.constant';
 import { PgViolationCodes } from '@/common/constants/pg-violation-codes.constant';
 import { hasNoUpdateFields } from '@/common/utils/has-no-update-fields.utils';

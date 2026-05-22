@@ -18,7 +18,7 @@ import {
 import { returnOrThrow } from '@/common/utils/return-or-throw.utils';
 import { Serialize } from '@/common/interceptors/serialize.interceptor';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import type { UserEntity } from '@users/entity/user.entity';
+import { UserEntity } from '@users/entity/user.entity';
 import { JwtGuard } from './guards/jwt.guard';
 
 @Controller('auth')
