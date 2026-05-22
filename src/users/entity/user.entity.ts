@@ -26,7 +26,7 @@ export class UserEntity {
   @Column()
   password!: string;
 
-  @Column({ default: Roles.USER })
+  @Column({ type: 'varchar', default: Roles.USER })
   role!: RoleType;
 
   @Column({ default: 1 })
