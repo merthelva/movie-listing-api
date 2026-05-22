@@ -12,6 +12,8 @@ import { TimeoutInterceptor } from '@/common/interceptors/timeout.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  // Get the underlying Express instance and set trust proxy:
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
   app.enableShutdownHooks();
   app.use(json({ limit: '1mb' }));
   app.useGlobalPipes(
