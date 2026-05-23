@@ -17,6 +17,8 @@ import { UsersModule } from '@users/users.module';
 import { WatchlistEntity } from '@watchlists/entity/watchlist.entity';
 import { WatchlistsModule } from '@watchlists/watchlists.module';
 
+import { InitialSchema1779552504166 } from './database/migrations/1779552504166-InitialSchema';
+
 @Module({
   imports: [
     ThrottlerModule.forRoot([{ limit: 60, ttl: 60_000 }]),
@@ -41,6 +43,8 @@ import { WatchlistsModule } from '@watchlists/watchlists.module';
           MovieEntity,
           FavoritelistEntity,
         ],
+        migrations: [InitialSchema1779552504166],
+        migrationsRun: true,
         synchronize: process.env.NODE_ENV !== 'production',
         logging: process.env.NODE_ENV !== 'production',
       }),
