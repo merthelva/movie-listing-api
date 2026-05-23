@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:17-alpine3.22
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: user_movie_list_db_dev
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: movie-listing-api:dev-1
+    env_file:
+      - .env.development
+    environment:
+      DB_HOST: db # override .env.development's localhost with service name
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy # wait until postgres healthcheck passes
+
+volumes:
+  pgdata:
