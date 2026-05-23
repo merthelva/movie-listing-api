@@ -33,7 +33,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 
 # Install ONLY production dependencies
-RUN pnpm install --frozen-lockfile --prod --allow-scripts=true
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 
 # Copy compiled output from builder stage
 COPY --from=builder /app/dist ./dist
