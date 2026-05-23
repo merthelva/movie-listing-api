@@ -7,7 +7,10 @@ import { MovieEntity } from '@movies/entity/movie.entity';
 import { UserEntity } from '@users/entity/user.entity';
 import { WatchlistEntity } from '@watchlists/entity/watchlist.entity';
 
-const envFile = `.env.${process.env.NODE_ENV}`;
+// Load environment-specific .env file. Defaults to 'development' if NODE_ENV not set.
+// For production migrations, explicitly set: NODE_ENV=production pnpm migration:run
+const env = process.env.NODE_ENV || 'development';
+const envFile = `.env.${env}`;
 dotenv.config({ path: envFile });
 
 export const AppDataSource = new DataSource({
