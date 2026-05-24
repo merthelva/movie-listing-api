@@ -81,6 +81,15 @@
       "json",
       "ts"
     ],
+    "moduleNameMapper": {
+      "^@auth/(.*)$": "<rootDir>/auth/$1",
+      "^@health/(.*)$": "<rootDir>/health/$1",
+      "^@users/(.*)$": "<rootDir>/users/$1",
+      "^@movies/(.*)$": "<rootDir>/movies/$1",
+      "^@watchlists/(.*)$": "<rootDir>/watchlists/$1",
+      "^@favoritelists/(.*)$": "<rootDir>/favoritelists/$1",
+      "^@/(.*)$": "<rootDir>/$1"
+    },
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
