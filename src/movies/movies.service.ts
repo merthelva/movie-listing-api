@@ -6,10 +6,15 @@ import { GenericResponseType } from '@/common/types/generic-response.type';
 import { TtlCache } from '@/common/utils/ttl-cache.utils';
 import { maxCacheSize } from './constants/max-cache-size.constant';
 import type {
+  MovieCastResponseType,
   MovieDetailsType,
   SearchMovieResultType,
+  TmdbMovieCastResponseType,
   TmdbMovieDetailType,
+  TmdbMovieListResponseType,
   TmdbSearchResultType,
+  MovieTrailerType,
+  MovieCategoryType,
 } from '@movies/types';
 
 @Injectable()
@@ -21,7 +26,10 @@ export class MoviesService {
   private readonly fetchTimeoutMs: number;
   private readonly cache: TtlCache<
     string,
-    SearchMovieResultType | MovieDetailsType
+    | SearchMovieResultType
+    | MovieDetailsType
+    | MovieCastResponseType['cast']
+    | MovieTrailerType
   >;
 
   private readonly logger = new Logger(MoviesService.name);
@@ -48,6 +56,68 @@ export class MoviesService {
     );
     this.cache = new TtlCache(this.cacheTtlMs, maxCacheSize);
     setInterval(() => this.cache.evictExpired(), this.cacheTtlMs);
+  }
+
+  async searchMovies(
+    query: string,
+    page: number = 1,
+  ): Promise<GenericResponseType<SearchMovieResultType>> {
+    const cacheKey = `search:${query.toLowerCase()}:${page}`;
+    const cachedMovieResults = this.cache.get(cacheKey);
+    if (cachedMovieResults) {
+      return {
+        status: 'success',
+        data: cachedMovieResults as SearchMovieResultType,
+      };
+    }
+
+    const url = `${this.baseUrl}/search/movie?query=${encodeURIComponent(query)}&page=${page}`;
+
+    try {
+      const response = await this.fetchWithRetry(url);
+      if (!response.ok) {
+        return {
+          code:
+            response.status === 404
+              ? HttpStatus.NOT_FOUND
+              : HttpStatus.INTERNAL_SERVER_ERROR,
+          status: 'error',
+          message:
+            response.status === 404
+              ? `No results found for query "${query}".`
+              : 'An error occurred while fetching movies from TMDB.',
+        };
+      }
+
+      const data = (await response.json()) as TmdbSearchResultType;
+      const cachedMovieResultsValue: SearchMovieResultType = {
+        page: data.page,
+        totalPages: data.total_pages,
+        totalResults: data.total_results,
+        results: data.results.map((item) => ({
+          tmdbId: item.id,
+          title: item.title,
+          overview: item.overview,
+          posterPath: item.poster_path ?? null,
+          releaseDate: item.release_date,
+          voteAverage: this.normalizeVoteAverage(item.vote_average),
+        })),
+      };
+
+      this.cache.set(cacheKey, cachedMovieResultsValue);
+
+      return { status: 'success', data: cachedMovieResultsValue };
+    } catch (err) {
+      this.logger.error(
+        'Failed to fetch movies from TMDB',
+        err instanceof Error ? err.stack : err,
+      );
+      return {
+        code: HttpStatus.INTERNAL_SERVER_ERROR,
+        status: 'error',
+        message: 'An error occurred while fetching movies from TMDB.',
+      };
+    }
   }
 
   async getMovieDetails(
@@ -120,20 +190,28 @@ export class MoviesService {
     }
   }
 
-  async searchMovies(
-    query: string,
-    page: number = 1,
-  ): Promise<GenericResponseType<SearchMovieResultType>> {
-    const cacheKey = `search:${query.toLowerCase()}:${page}`;
-    const cachedMovieResults = this.cache.get(cacheKey);
-    if (cachedMovieResults) {
+  async getMovieCast(
+    tmdbId: number,
+  ): Promise<GenericResponseType<MovieCastResponseType['cast']>> {
+    const cacheKey = `movie-cast:${tmdbId}`;
+    const cachedMovieCast = this.cache.get(cacheKey);
+    if (cachedMovieCast) {
       return {
         status: 'success',
-        data: cachedMovieResults as SearchMovieResultType,
+        data: cachedMovieCast as MovieCastResponseType['cast'],
       };
     }
 
-    const url = `${this.baseUrl}/search/movie?query=${encodeURIComponent(query)}&page=${page}`;
+    if (tmdbId <= 0) {
+      return {
+        code: HttpStatus.BAD_REQUEST,
+        status: 'error',
+        message:
+          'Invalid "tmdbId" value is provided. It must be a positive integer.',
+      };
+    }
+
+    const url = `${this.baseUrl}/movie/${tmdbId}/credits`;
 
     try {
       const response = await this.fetchWithRetry(url);
@@ -146,13 +224,143 @@ export class MoviesService {
           status: 'error',
           message:
             response.status === 404
-              ? `No results found for query "${query}".`
-              : 'An error occurred while fetching movies from TMDB.',
+              ? `Movie with id ${tmdbId} is not found in TMDB.`
+              : 'An error occurred while fetching movie cast from TMDB.',
+        };
+      }
+
+      const data = (await response.json()) as TmdbMovieCastResponseType;
+      const cachedMovieCastValue: MovieCastResponseType['cast'] = data.cast.map(
+        (castMember) => ({
+          id: castMember.id,
+          name: castMember.name,
+          character: castMember.character,
+          order: castMember.order,
+          profilePath: castMember.profile_path ?? null,
+        }),
+      );
+
+      return { status: 'success', data: cachedMovieCastValue };
+    } catch (err) {
+      this.logger.error(
+        'Failed to fetch movie cast from TMDB',
+        err instanceof Error ? err.stack : err,
+      );
+      return {
+        code: HttpStatus.INTERNAL_SERVER_ERROR,
+        status: 'error',
+        message: 'An error occurred while fetching movie cast from TMDB.',
+      };
+    }
+  }
+
+  async getMovieTrailer(
+    tmdbId: number,
+  ): Promise<GenericResponseType<MovieTrailerType>> {
+    const cacheKey = `movie-trailer:${tmdbId}`;
+    const cachedMovieTrailer = this.cache.get(cacheKey);
+    if (cachedMovieTrailer) {
+      return {
+        status: 'success',
+        data: cachedMovieTrailer as MovieTrailerType,
+      };
+    }
+
+    if (tmdbId <= 0) {
+      return {
+        code: HttpStatus.BAD_REQUEST,
+        status: 'error',
+        message:
+          'Invalid "tmdbId" value is provided. It must be a positive integer.',
+      };
+    }
+
+    const url = `${this.baseUrl}/movie/${tmdbId}/videos`;
+
+    try {
+      const response = await this.fetchWithRetry(url);
+      if (!response.ok) {
+        return {
+          code:
+            response.status === 404
+              ? HttpStatus.NOT_FOUND
+              : HttpStatus.INTERNAL_SERVER_ERROR,
+          status: 'error',
+          message:
+            response.status === 404
+              ? `Movie with id ${tmdbId} is not found in TMDB.`
+              : 'An error occurred while fetching movie trailer from TMDB.',
+        };
+      }
+
+      const data = (await response.json()) as TmdbMovieListResponseType;
+
+      if (data.results.length === 0) {
+        return {
+          code: HttpStatus.NOT_FOUND,
+          status: 'error',
+          message: `No official trailer is found for the movie with id ${tmdbId}.`,
+        };
+      }
+
+      const cachedMovieTrailerValue: MovieTrailerType =
+        data.results
+          .map(({ id, key, site, type }) => ({
+            id,
+            key,
+            site,
+            type,
+          }))
+          .find(({ site, type }) => site === 'YouTube' && type === 'Trailer') ??
+        null;
+
+      return { status: 'success', data: cachedMovieTrailerValue };
+    } catch (err) {
+      this.logger.error(
+        'Failed to fetch movie trailer from TMDB',
+        err instanceof Error ? err.stack : err,
+      );
+      return {
+        code: HttpStatus.INTERNAL_SERVER_ERROR,
+        status: 'error',
+        message: 'An error occurred while fetching movie trailer from TMDB.',
+      };
+    }
+  }
+
+  async getMoviesByCategory(
+    category: MovieCategoryType,
+    page: number = 1,
+  ): Promise<GenericResponseType<SearchMovieResultType>> {
+    const cacheKey = `${category}:${page}`;
+    const cachedMoviesByCategory = this.cache.get(cacheKey);
+    if (cachedMoviesByCategory) {
+      return {
+        status: 'success',
+        data: cachedMoviesByCategory as SearchMovieResultType,
+      };
+    }
+
+    const url = `${this.baseUrl}/movie/${category}?page=${page}`;
+
+    try {
+      const response = await this.fetchWithRetry(url);
+      if (!response.ok) {
+        return {
+          code:
+            response.status === 404
+              ? HttpStatus.NOT_FOUND
+              : HttpStatus.INTERNAL_SERVER_ERROR,
+          status: 'error',
+          message:
+            response.status === 404
+              ? `No movies found for category "${category}".`
+              : `An error occurred while fetching movies for category ${category} from TMDB.`,
         };
       }
 
       const data = (await response.json()) as TmdbSearchResultType;
-      const cachedMovieResultsValue: SearchMovieResultType = {
+      const cachedMoviesByCategoryValue: SearchMovieResultType = {
         page: data.page,
         totalPages: data.total_pages,
         totalResults: data.total_results,
@@ -166,9 +374,9 @@ export class MoviesService {
         })),
       };
 
-      this.cache.set(cacheKey, cachedMovieResultsValue);
+      this.cache.set(cacheKey, cachedMoviesByCategoryValue);
 
-      return { status: 'success', data: cachedMovieResultsValue };
+      return { status: 'success', data: cachedMoviesByCategoryValue };
     } catch (err) {
       this.logger.error(
         'Failed to fetch movies from TMDB',

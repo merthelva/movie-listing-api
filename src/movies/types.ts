@@ -19,6 +19,44 @@ type TmdbMovieType = {
   vote_count: number;
 };
 
+type TmdbMovieVideoType = {
+  iso_639_1: string;
+  iso_3166_1: string;
+  name: string;
+  key: string;
+  site: string;
+  size: number;
+  type: string;
+  official: boolean;
+  id: string;
+  published_at: string;
+};
+
+export type TmdbMovieListResponseType = {
+  id: number;
+  results: Array<TmdbMovieVideoType>;
+};
+
+type TmdbMovieCastType = {
+  adult: boolean;
+  gender: number;
+  id: number;
+  known_for_department: string;
+  name: string;
+  original_name: string;
+  popularity: number;
+  profile_path: string;
+  cast_id: number;
+  character: string;
+  credit_id: string;
+  order: number;
+};
+
+export type TmdbMovieCastResponseType = {
+  id: number;
+  cast: Array<TmdbMovieCastType>;
+};
+
 export type TmdbSearchResultType = {
   page: number;
   results: Array<TmdbMovieType>;
@@ -118,3 +156,31 @@ export type MovieDetailsType = {
   voteAverage: number;
   voteCount: number;
 };
+
+type CastType = {
+  id: number;
+  name: string;
+  character: string;
+  order: number;
+  profilePath: string;
+};
+
+type MovieCastType = Array<CastType>;
+
+export type MovieCastResponseType = {
+  id: number;
+  cast: MovieCastType;
+};
+
+export type MovieTrailerType = {
+  id: string;
+  key: string;
+  site: string;
+  type: string;
+} | null;
+
+export type MovieCategoryType =
+  | 'popular'
+  | 'top_rated'
+  | 'upcoming'
+  | 'now_playing';
