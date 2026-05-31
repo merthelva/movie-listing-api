@@ -12,7 +12,6 @@ import { SuccessResponseType } from '@/common/types/success-response.type';
 import { CreateUserDto } from '@/users/dto/create-user.dto';
 import { UserEntity } from '@/users/entity/user.entity';
 import { UserCacheService } from '@/users/user-cache.service';
-import { LoginResponseType } from './types';
 
 @Injectable()
 export class AuthService {
@@ -69,7 +68,7 @@ export class AuthService {
   async login(
     email: string,
     password: string,
-  ): Promise<GenericResponseType<LoginResponseType>> {
+  ): Promise<GenericResponseType<UserEntity & { accessToken: string }>> {
     try {
       const user = await this.usersRepository.findOne({
         where: { email: email.toLowerCase() },
@@ -101,8 +100,7 @@ export class AuthService {
         status: 'success',
         data: {
           accessToken,
-          id: user.id,
-          email: user.email,
+          ...user,
         },
       };
     } catch (error) {
