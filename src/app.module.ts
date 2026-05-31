@@ -36,7 +36,10 @@ import { InitialSchema1779552504166 } from './database/migrations/1779552504166-
         port: configService.get<number>('DB_PORT', 5432),
         username: configService.get<string>('DB_USERNAME', 'postgres'),
         password: configService.get<string>('DB_PASSWORD', 'password'),
-        database: configService.get<string>('DB_NAME', 'task_manager'),
+        database: configService.get<string>(
+          'DB_NAME',
+          'user_movie_list_db_dev',
+        ),
         entities: [
           UserEntity,
           WatchlistEntity,
