@@ -6,12 +6,6 @@ export type JwtPayloadType = {
   tokenVersion: number;
 };
 
-export type LoginResponseType = {
-  accessToken: string;
-  id: number;
-  email: string;
-};
-
 export type CachedUserType = Pick<
   UserEntity,
   'id' | 'email' | 'role' | 'tokenVersion'
