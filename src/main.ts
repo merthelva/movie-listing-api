@@ -8,6 +8,7 @@ import { NestFactory } from '@nestjs/core';
 import { json } from 'express';
 
 import { AppModule } from '@/app.module';
+import { HttpExceptionFilter } from '@/common/filters/http-exception.filter';
 import { TimeoutInterceptor } from '@/common/interceptors/timeout.interceptor';
 
 async function bootstrap() {
@@ -16,6 +17,7 @@ async function bootstrap() {
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
   app.enableShutdownHooks();
   app.use(json({ limit: '1mb' }));
+  app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
