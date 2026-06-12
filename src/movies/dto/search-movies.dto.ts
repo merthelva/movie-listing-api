@@ -1,4 +1,13 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, Max, MaxLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class SearchMoviesDto {
   @IsString()
@@ -7,8 +16,9 @@ export class SearchMoviesDto {
   query!: string;
 
   @IsOptional()
-  @IsNumber()
-  @IsPositive()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
   @Max(500)
   page?: number;
 

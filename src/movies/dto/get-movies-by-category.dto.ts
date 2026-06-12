@@ -1,9 +1,11 @@
-import { IsNumber, IsOptional, IsPositive, Max } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsInt, IsOptional, Max, Min } from 'class-validator';
 
 export class GetMoviesByCategoryDto {
   @IsOptional()
-  @IsNumber()
-  @IsPositive()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
   @Max(500)
   page?: number;
 }
