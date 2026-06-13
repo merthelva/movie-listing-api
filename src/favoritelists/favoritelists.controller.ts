@@ -73,7 +73,7 @@ export class FavoritelistsController {
     return returnOrThrow(response);
   }
 
-  @Get('movie-status/:movieTmdbId')
+  @Get('movieStatus/:movieTmdbId')
   async getUserFavoritelistsWithMovieStatus(
     @CurrentUser() currentUser: UserEntity,
     @Param('movieTmdbId', ParseIntPipe) movieTmdbId: number,

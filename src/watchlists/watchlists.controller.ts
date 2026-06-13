@@ -73,7 +73,7 @@ export class WatchlistsController {
     return returnOrThrow(response);
   }
 
-  @Get('movie-status/:movieTmdbId')
+  @Get('movieStatus/:movieTmdbId')
   async getUserWatchlistsWithMovieStatus(
     @CurrentUser() currentUser: UserEntity,
     @Param('movieTmdbId', ParseIntPipe) movieTmdbId: number,
