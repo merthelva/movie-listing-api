@@ -13,3 +13,9 @@ export type ListUserWatchlistMoviesResponseType = PaginationType & {
 export type CheckIsMovieInUserWatchlistResponseType = {
   isMovieInList: boolean;
 };
+
+export type WatchlistWithMovieStatusResponseType = {
+  id: number;
+  name: string;
+  hasMovie: boolean;
+};

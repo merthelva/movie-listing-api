@@ -73,6 +73,20 @@ export class FavoritelistsController {
     return returnOrThrow(response);
   }
 
+  @Get('movie-status/:movieTmdbId')
+  async getUserFavoritelistsWithMovieStatus(
+    @CurrentUser() currentUser: UserEntity,
+    @Param('movieTmdbId', ParseIntPipe) movieTmdbId: number,
+  ) {
+    const response =
+      await this.favoritelistsService.getUserFavoritelistsWithMovieStatus(
+        currentUser.id,
+        movieTmdbId,
+      );
+
+    return returnOrThrow(response);
+  }
+
   @Get(':id')
   @Serialize(GetAllUserFavoritelistMoviesResponseDto)
   async getAllUserFavoritelistMovies(

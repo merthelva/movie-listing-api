@@ -73,6 +73,20 @@ export class WatchlistsController {
     return returnOrThrow(response);
   }
 
+  @Get('movie-status/:movieTmdbId')
+  async getUserWatchlistsWithMovieStatus(
+    @CurrentUser() currentUser: UserEntity,
+    @Param('movieTmdbId', ParseIntPipe) movieTmdbId: number,
+  ) {
+    const response =
+      await this.watchlistsService.getUserWatchlistsWithMovieStatus(
+        currentUser.id,
+        movieTmdbId,
+      );
+
+    return returnOrThrow(response);
+  }
+
   @Get(':id')
   @Serialize(GetAllUserWatchlistMoviesResponseDto)
   async getAllUserWatchlistMovies(

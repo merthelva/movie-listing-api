@@ -20,6 +20,7 @@ import {
   ListUserFavoritelistMoviesResponseType,
   ListUserFavoritelistsResponseType,
   CheckIsMovieInUserFavoritelistResponseType,
+  FavoritelistWithMovieStatusResponseType,
 } from '@favoritelists/types';
 
 @Injectable()
@@ -446,6 +447,47 @@ export class FavoritelistsService {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
         message: 'An error occurred while updating the favoritelist.',
+      };
+    }
+  }
+
+  async getUserFavoritelistsWithMovieStatus(
+    userId: number,
+    movieTmdbId: number,
+  ): Promise<
+    GenericResponseType<Array<FavoritelistWithMovieStatusResponseType>>
+  > {
+    try {
+      const results: Array<FavoritelistWithMovieStatusResponseType> =
+        await this.favoritelistRepository
+          .createQueryBuilder('favoritelist')
+          .innerJoin('favoritelist.user', 'user')
+          .leftJoin(
+            'favoritelist.movies',
+            'movie',
+            'movie.tmdbId = :movieTmdbId',
+            { movieTmdbId },
+          )
+          .select('favoritelist.id', 'id')
+          .addSelect('favoritelist.name', 'name')
+          .addSelect(
+            'CASE WHEN movie.tmdbId IS NOT NULL THEN true ELSE false END',
+            'hasMovie',
+          )
+          .where('user.id = :userId', { userId })
+          .getRawMany();
+
+      return {
+        status: 'success',
+        data: results,
+      };
+    } catch (error) {
+      this.logger.error(error);
+      return {
+        code: HttpStatus.INTERNAL_SERVER_ERROR,
+        status: 'error',
+        message:
+          'An error occurred while fetching the user favoritelists with movie status.',
       };
     }
   }

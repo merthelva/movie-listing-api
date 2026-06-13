@@ -20,6 +20,7 @@ import {
   CheckIsMovieInUserWatchlistResponseType,
   ListUserWatchlistMoviesResponseType,
   ListUserWatchlistsResponseType,
+  WatchlistWithMovieStatusResponseType,
 } from '@watchlists/types';
 
 @Injectable()
@@ -435,6 +436,45 @@ export class WatchlistsService {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
         message: 'An error occurred while updating the watchlist.',
+      };
+    }
+  }
+
+  async getUserWatchlistsWithMovieStatus(
+    userId: number,
+    movieTmdbId: number,
+  ): Promise<GenericResponseType<Array<WatchlistWithMovieStatusResponseType>>> {
+    try {
+      const results: Array<WatchlistWithMovieStatusResponseType> =
+        await this.watchlistRepository
+          .createQueryBuilder('watchlist')
+          .innerJoin('watchlist.user', 'user')
+          .leftJoin(
+            'watchlist.movies',
+            'movie',
+            'movie.tmdbId = :movieTmdbId',
+            { movieTmdbId },
+          )
+          .select('watchlist.id', 'id')
+          .addSelect('watchlist.name', 'name')
+          .addSelect(
+            'CASE WHEN movie.tmdbId IS NOT NULL THEN true ELSE false END',
+            'hasMovie',
+          )
+          .where('user.id = :userId', { userId })
+          .getRawMany();
+
+      return {
+        status: 'success',
+        data: results,
+      };
+    } catch (error) {
+      this.logger.error(error);
+      return {
+        code: HttpStatus.INTERNAL_SERVER_ERROR,
+        status: 'error',
+        message:
+          'An error occurred while fetching the user watchlists with movie status.',
       };
     }
   }
