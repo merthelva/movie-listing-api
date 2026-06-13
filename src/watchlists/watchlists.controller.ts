@@ -134,7 +134,7 @@ export class WatchlistsController {
     return returnOrThrow(response);
   }
 
-  @Get(':id/contains-movie/:tmdbId')
+  @Get(':id/containsMovie/:tmdbId')
   async checkIsMovieInUserWatchlist(
     @CurrentUser() currentUser: UserEntity,
     @Param('id', ParseIntPipe) id: number,

@@ -137,7 +137,7 @@ export class FavoritelistsController {
     return returnOrThrow(response);
   }
 
-  @Get(':id/contains-movie/:tmdbId')
+  @Get(':id/containsMovie/:tmdbId')
   async checkIsMovieInUserFavoritelist(
     @CurrentUser() currentUser: UserEntity,
     @Param('id', ParseIntPipe) id: number,
