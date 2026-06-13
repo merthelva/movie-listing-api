@@ -1,7 +1,7 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 
 import { PgViolationCodes } from '@/common/constants/pg-violation-codes.constant';
 import { PaginationDto } from '@/common/dtos/pagination.dto';
@@ -11,6 +11,7 @@ import { hasNoUpdateFields } from '@/common/utils/has-no-update-fields.utils';
 import { returnPaginatedData } from '@/common/utils/return-paginated-data.utils';
 import { MovieEntity } from '@movies/entity/movie.entity';
 import { MoviesService } from '@movies/movies.service';
+import { MovieDetailsType } from '@movies/types';
 import { CreateFavoritelistDto } from '@favoritelists/dto/create-favoritelist.dto';
 import { UpdateFavoritelistDto } from './dto/update-favoritelist.dto';
 import { ErrorTokens } from './constants/error-tokens.constant';
@@ -18,6 +19,7 @@ import { FavoritelistEntity } from '@favoritelists/entity/favoritelist.entity';
 import {
   ListUserFavoritelistMoviesResponseType,
   ListUserFavoritelistsResponseType,
+  CheckIsMovieInUserFavoritelistResponseType,
 } from '@favoritelists/types';
 
 @Injectable()
@@ -31,6 +33,52 @@ export class FavoritelistsService {
     private movieRepository: Repository<MovieEntity>,
     private moviesService: MoviesService,
   ) {}
+
+  private async requireFavoritelistForUser(
+    manager: EntityManager,
+    favoritelistId: number,
+    userId: number,
+  ): Promise<FavoritelistEntity> {
+    const favoritelist = await manager
+      .createQueryBuilder(FavoritelistEntity, 'favoritelist')
+      .innerJoin('favoritelist.user', 'user')
+      .where('favoritelist.id = :favoritelistId', { favoritelistId })
+      .andWhere('user.id = :userId', { userId })
+      .getOne();
+
+    if (!favoritelist) {
+      throw new Error(ErrorTokens.FAVORITELIST_NOT_FOUND);
+    }
+
+    return favoritelist;
+  }
+
+  private async upsertMovieEntity(
+    manager: EntityManager,
+    movieDetails: MovieDetailsType,
+  ): Promise<MovieEntity> {
+    let movieEntity = await manager.findOne(MovieEntity, {
+      where: { tmdbId: movieDetails.tmdbId },
+    });
+    if (!movieEntity) {
+      // Instantiating MovieEntity and assigning fields
+      // prevents the TypeORM overload/type inference mismatch
+      movieEntity = new MovieEntity();
+      movieEntity.tmdbId = movieDetails.tmdbId;
+      movieEntity.title = movieDetails.title;
+      movieEntity.overview = movieDetails.overview ?? '';
+      movieEntity.posterPath = movieDetails.posterPath ?? null;
+      movieEntity.releaseDate = movieDetails.releaseDate;
+      movieEntity.voteAverage = movieDetails.voteAverage;
+      movieEntity.voteCount = movieDetails.voteCount;
+      movieEntity.budget = movieDetails.budget;
+      movieEntity.revenue = movieDetails.revenue;
+      movieEntity.runtime = movieDetails.runtime;
+      movieEntity.genres = movieDetails.genres;
+      await manager.save(movieEntity);
+    }
+    return movieEntity;
+  }
 
   async createUserFavoritelist(
     userId: number,
@@ -217,38 +265,8 @@ export class FavoritelistsService {
       // Use a DB transaction on the favoritelist row
       // to make check-and-insert atomic and avoid race conditions.
       await this.favoritelistRepository.manager.transaction(async (manager) => {
-        const foundUserFavoritelist = await manager
-          .createQueryBuilder(FavoritelistEntity, 'favoritelist')
-          .innerJoin('favoritelist.user', 'user')
-          .where('favoritelist.id = :favoritelistId', { favoritelistId })
-          .andWhere('user.id = :userId', { userId })
-          .getOne();
-
-        if (!foundUserFavoritelist) {
-          throw new Error(ErrorTokens.FAVORITELIST_NOT_FOUND);
-        }
-
-        // Ensure MovieEntity exists (within the transaction).
-        let movieEntity = await manager.findOne(MovieEntity, {
-          where: { tmdbId: foundMovie.tmdbId },
-        });
-        if (!movieEntity) {
-          // Instantiating MovieEntity and assigning fields
-          // prevents the TypeORM overload/type inference mismatch
-          movieEntity = new MovieEntity();
-          movieEntity.tmdbId = foundMovie.tmdbId;
-          movieEntity.title = foundMovie.title;
-          movieEntity.overview = foundMovie.overview ?? '';
-          movieEntity.posterPath = foundMovie.posterPath ?? null;
-          movieEntity.releaseDate = foundMovie.releaseDate;
-          movieEntity.voteAverage = foundMovie.voteAverage;
-          movieEntity.voteCount = foundMovie.voteCount;
-          movieEntity.budget = foundMovie.budget;
-          movieEntity.revenue = foundMovie.revenue;
-          movieEntity.runtime = foundMovie.runtime;
-          movieEntity.genres = foundMovie.genres;
-          await manager.save(movieEntity);
-        }
+        await this.requireFavoritelistForUser(manager, favoritelistId, userId);
+        const movieEntity = await this.upsertMovieEntity(manager, foundMovie);
 
         // Check join table for existing pair (avoid loading all movies)
         const existingRows: Array<{ exists: number }> = await manager.query(
@@ -428,6 +446,47 @@ export class FavoritelistsService {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
         message: 'An error occurred while updating the favoritelist.',
+      };
+    }
+  }
+
+  async checkIsMovieInUserFavoritelist(
+    userId: number,
+    favoritelistId: number,
+    movieTmdbId: number,
+  ): Promise<GenericResponseType<CheckIsMovieInUserFavoritelistResponseType>> {
+    try {
+      const foundUserFavoritelist = await this.favoritelistRepository.findOne({
+        where: { id: favoritelistId, user: { id: userId } },
+        select: { id: true },
+      });
+      if (!foundUserFavoritelist) {
+        return {
+          code: HttpStatus.NOT_FOUND,
+          status: 'error',
+          message: `Favoritelist with id ${favoritelistId} for the user is not found.`,
+        };
+      }
+
+      const existingRows: Array<{ exists: number }> =
+        await this.favoritelistRepository.manager.query(
+          'SELECT 1 as exists FROM favoritelist_movies WHERE favoritelist_id = $1 AND movie_tmdb_id = $2 LIMIT 1',
+          [favoritelistId, movieTmdbId],
+        );
+
+      return {
+        status: 'success',
+        data: {
+          isMovieInList: existingRows.length > 0,
+        },
+      };
+    } catch (err: unknown) {
+      this.logger.error(err);
+      return {
+        code: HttpStatus.INTERNAL_SERVER_ERROR,
+        status: 'error',
+        message:
+          'An error occurred while checking the movie in the favoritelist.',
       };
     }
   }

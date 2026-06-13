@@ -1,7 +1,7 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 
 import { PgViolationCodes } from '@/common/constants/pg-violation-codes.constant';
 import { PaginationDto } from '@/common/dtos/pagination.dto';
@@ -11,11 +11,13 @@ import { hasNoUpdateFields } from '@/common/utils/has-no-update-fields.utils';
 import { returnPaginatedData } from '@/common/utils/return-paginated-data.utils';
 import { MovieEntity } from '@movies/entity/movie.entity';
 import { MoviesService } from '@movies/movies.service';
+import { MovieDetailsType } from '@movies/types';
 import { CreateWatchlistDto } from '@watchlists/dto/create-watchlist.dto';
 import { UpdateWatchlistDto } from './dto/update-watchlist.dto';
 import { ErrorTokens } from './constants/error-tokens.constant';
 import { WatchlistEntity } from '@watchlists/entity/watchlist.entity';
 import {
+  CheckIsMovieInUserWatchlistResponseType,
   ListUserWatchlistMoviesResponseType,
   ListUserWatchlistsResponseType,
 } from '@watchlists/types';
@@ -31,6 +33,52 @@ export class WatchlistsService {
     private movieRepository: Repository<MovieEntity>,
     private moviesService: MoviesService,
   ) {}
+
+  private async requireWatchlistForUser(
+    manager: EntityManager,
+    watchlistId: number,
+    userId: number,
+  ): Promise<WatchlistEntity> {
+    const watchlist = await manager
+      .createQueryBuilder(WatchlistEntity, 'watchlist')
+      .innerJoin('watchlist.user', 'user')
+      .where('watchlist.id = :watchlistId', { watchlistId })
+      .andWhere('user.id = :userId', { userId })
+      .getOne();
+
+    if (!watchlist) {
+      throw new Error(ErrorTokens.WATCHLIST_NOT_FOUND);
+    }
+
+    return watchlist;
+  }
+
+  private async upsertMovieEntity(
+    manager: EntityManager,
+    movieDetails: MovieDetailsType,
+  ): Promise<MovieEntity> {
+    let movieEntity = await manager.findOne(MovieEntity, {
+      where: { tmdbId: movieDetails.tmdbId },
+    });
+    if (!movieEntity) {
+      // Instantiating MovieEntity and assigning fields
+      // prevents the TypeORM overload/type inference mismatch
+      movieEntity = new MovieEntity();
+      movieEntity.tmdbId = movieDetails.tmdbId;
+      movieEntity.title = movieDetails.title;
+      movieEntity.overview = movieDetails.overview ?? '';
+      movieEntity.posterPath = movieDetails.posterPath ?? null;
+      movieEntity.releaseDate = movieDetails.releaseDate;
+      movieEntity.voteAverage = movieDetails.voteAverage;
+      movieEntity.voteCount = movieDetails.voteCount;
+      movieEntity.budget = movieDetails.budget;
+      movieEntity.revenue = movieDetails.revenue;
+      movieEntity.runtime = movieDetails.runtime;
+      movieEntity.genres = movieDetails.genres;
+      await manager.save(movieEntity);
+    }
+    return movieEntity;
+  }
 
   async createUserWatchlist(
     userId: number,
@@ -210,38 +258,8 @@ export class WatchlistsService {
       // Use a DB transaction on the watchlist row
       // to make check-and-insert atomic and avoid race conditions.
       await this.watchlistRepository.manager.transaction(async (manager) => {
-        const foundUserWatchlist = await manager
-          .createQueryBuilder(WatchlistEntity, 'watchlist')
-          .innerJoin('watchlist.user', 'user')
-          .where('watchlist.id = :watchlistId', { watchlistId })
-          .andWhere('user.id = :userId', { userId })
-          .getOne();
-
-        if (!foundUserWatchlist) {
-          throw new Error(ErrorTokens.WATCHLIST_NOT_FOUND);
-        }
-
-        // Ensure MovieEntity exists (within the transaction).
-        let movieEntity = await manager.findOne(MovieEntity, {
-          where: { tmdbId: foundMovie.tmdbId },
-        });
-        if (!movieEntity) {
-          // Instantiating MovieEntity and assigning fields
-          // prevents the TypeORM overload/type inference mismatch
-          movieEntity = new MovieEntity();
-          movieEntity.tmdbId = foundMovie.tmdbId;
-          movieEntity.title = foundMovie.title;
-          movieEntity.overview = foundMovie.overview ?? '';
-          movieEntity.posterPath = foundMovie.posterPath ?? null;
-          movieEntity.releaseDate = foundMovie.releaseDate;
-          movieEntity.voteAverage = foundMovie.voteAverage;
-          movieEntity.voteCount = foundMovie.voteCount;
-          movieEntity.budget = foundMovie.budget;
-          movieEntity.revenue = foundMovie.revenue;
-          movieEntity.runtime = foundMovie.runtime;
-          movieEntity.genres = foundMovie.genres;
-          await manager.save(movieEntity);
-        }
+        await this.requireWatchlistForUser(manager, watchlistId, userId);
+        const movieEntity = await this.upsertMovieEntity(manager, foundMovie);
 
         // Check join table for existing pair (avoid loading all movies)
         const existingRows: Array<{ exists: number }> = await manager.query(
@@ -417,6 +435,46 @@ export class WatchlistsService {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
         message: 'An error occurred while updating the watchlist.',
+      };
+    }
+  }
+
+  async checkIsMovieInUserWatchlist(
+    userId: number,
+    watchlistId: number,
+    movieTmdbId: number,
+  ): Promise<GenericResponseType<CheckIsMovieInUserWatchlistResponseType>> {
+    try {
+      const foundUserWatchlist = await this.watchlistRepository.findOne({
+        where: { id: watchlistId, user: { id: userId } },
+        select: { id: true },
+      });
+      if (!foundUserWatchlist) {
+        return {
+          code: HttpStatus.NOT_FOUND,
+          status: 'error',
+          message: `Watchlist with id ${watchlistId} for the user is not found.`,
+        };
+      }
+
+      const existingRows: Array<{ exists: number }> =
+        await this.watchlistRepository.manager.query(
+          'SELECT 1 as exists FROM watchlist_movies WHERE watchlist_id = $1 AND movie_tmdb_id = $2 LIMIT 1',
+          [watchlistId, movieTmdbId],
+        );
+
+      return {
+        status: 'success',
+        data: {
+          isMovieInList: existingRows.length > 0,
+        },
+      };
+    } catch (err: unknown) {
+      this.logger.error(err);
+      return {
+        code: HttpStatus.INTERNAL_SERVER_ERROR,
+        status: 'error',
+        message: 'An error occurred while checking the movie in the watchlist.',
       };
     }
   }

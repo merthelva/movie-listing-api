@@ -136,4 +136,20 @@ export class FavoritelistsController {
 
     return returnOrThrow(response);
   }
+
+  @Get(':id/contains-movie/:tmdbId')
+  async checkIsMovieInUserFavoritelist(
+    @CurrentUser() currentUser: UserEntity,
+    @Param('id', ParseIntPipe) id: number,
+    @Param('tmdbId', ParseIntPipe) tmdbId: number,
+  ) {
+    const response =
+      await this.favoritelistsService.checkIsMovieInUserFavoritelist(
+        currentUser.id,
+        id,
+        tmdbId,
+      );
+
+    return returnOrThrow(response);
+  }
 }

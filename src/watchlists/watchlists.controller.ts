@@ -133,4 +133,19 @@ export class WatchlistsController {
 
     return returnOrThrow(response);
   }
+
+  @Get(':id/contains-movie/:tmdbId')
+  async checkIsMovieInUserWatchlist(
+    @CurrentUser() currentUser: UserEntity,
+    @Param('id', ParseIntPipe) id: number,
+    @Param('tmdbId', ParseIntPipe) tmdbId: number,
+  ) {
+    const response = await this.watchlistsService.checkIsMovieInUserWatchlist(
+      currentUser.id,
+      id,
+      tmdbId,
+    );
+
+    return returnOrThrow(response);
+  }
 }

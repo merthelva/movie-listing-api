@@ -9,3 +9,7 @@ export type ListUserFavoritelistsResponseType = PaginationType & {
 export type ListUserFavoritelistMoviesResponseType = PaginationType & {
   items: Array<MovieEntity>;
 };
+
+export type CheckIsMovieInUserFavoritelistResponseType = {
+  isMovieInList: boolean;
+};
