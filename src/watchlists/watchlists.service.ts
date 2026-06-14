@@ -449,19 +449,14 @@ export class WatchlistsService {
         await this.watchlistRepository
           .createQueryBuilder('watchlist')
           .innerJoin('watchlist.user', 'user')
-          .leftJoin(
-            'watchlist.movies',
-            'movie',
-            'movie.tmdbId = :movieTmdbId',
-            { movieTmdbId },
-          )
           .select('watchlist.id', 'id')
           .addSelect('watchlist.name', 'name')
           .addSelect(
-            'CASE WHEN movie.tmdbId IS NOT NULL THEN true ELSE false END',
+            'EXISTS(SELECT 1 FROM watchlist_movies wm WHERE wm.watchlist_id = watchlist.id AND wm.movie_tmdb_id = :movieTmdbId)',
             'hasMovie',
           )
           .where('user.id = :userId', { userId })
+          .setParameter('movieTmdbId', movieTmdbId)
           .getRawMany();
 
       return {

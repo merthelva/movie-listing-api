@@ -462,19 +462,14 @@ export class FavoritelistsService {
         await this.favoritelistRepository
           .createQueryBuilder('favoritelist')
           .innerJoin('favoritelist.user', 'user')
-          .leftJoin(
-            'favoritelist.movies',
-            'movie',
-            'movie.tmdbId = :movieTmdbId',
-            { movieTmdbId },
-          )
           .select('favoritelist.id', 'id')
           .addSelect('favoritelist.name', 'name')
           .addSelect(
-            'CASE WHEN movie.tmdbId IS NOT NULL THEN true ELSE false END',
+            'EXISTS(SELECT 1 FROM favoritelist_movies fm WHERE fm.favoritelist_id = favoritelist.id AND fm.movie_tmdb_id = :movieTmdbId)',
             'hasMovie',
           )
           .where('user.id = :userId', { userId })
+          .setParameter('movieTmdbId', movieTmdbId)
           .getRawMany();
 
       return {
