@@ -4,6 +4,7 @@ import { returnOrThrow } from '@/common/utils/return-or-throw.utils';
 import { SearchMoviesDto } from '@movies/dto/search-movies.dto';
 import { MoviesService } from '@movies/movies.service';
 import { GetMoviesByCategoryDto } from './dto/get-movies-by-category.dto';
+import { GetMovieDetailsDto } from './dto/get-movie-details.dto';
 import type { MovieCategoryType } from './types';
 
 @Controller('movies')
@@ -21,8 +22,11 @@ export class MoviesController {
   }
 
   @Get(':tmdbId/details')
-  async getMovieDetails(@Param('tmdbId', ParseIntPipe) tmdbId: number) {
-    const response = await this.moviesService.getMovieDetails(tmdbId);
+  async getMovieDetails(
+    @Param('tmdbId', ParseIntPipe) tmdbId: number,
+    @Query() { language }: GetMovieDetailsDto,
+  ) {
+    const response = await this.moviesService.getMovieDetails(tmdbId, language);
 
     return returnOrThrow(response);
   }

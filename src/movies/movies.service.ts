@@ -16,6 +16,7 @@ import type {
   MovieTrailerType,
   MovieCategoryType,
 } from '@movies/types';
+import { LocaleType } from '@/common/types/locale.type';
 
 @Injectable()
 export class MoviesService {
@@ -122,8 +123,9 @@ export class MoviesService {
 
   async getMovieDetails(
     tmdbId: number,
+    language: LocaleType = 'en-US',
   ): Promise<GenericResponseType<MovieDetailsType>> {
-    const cacheKey = `movie:${tmdbId}`;
+    const cacheKey = `movie:${tmdbId}:${language}`;
     const cachedMovieDetails = this.cache.get(cacheKey);
     if (cachedMovieDetails) {
       return {
@@ -141,7 +143,7 @@ export class MoviesService {
       };
     }
 
-    const url = `${this.baseUrl}/movie/${tmdbId}`;
+    const url = `${this.baseUrl}/movie/${tmdbId}?language=${language}`;
 
     try {
       const response = await this.fetchWithRetry(url);
