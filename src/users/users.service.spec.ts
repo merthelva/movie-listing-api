@@ -1,10 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
+import { I18nService } from 'nestjs-i18n';
 import { UsersService } from './users.service';
 import { UserEntity } from './entity/user.entity';
 import { UserCacheService } from './user-cache.service';
 import { HttpStatus } from '@nestjs/common';
+import * as enMessages from '@/i18n/en-US/messages.json';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -25,6 +27,16 @@ describe('UsersService', () => {
 
   const mockUserCacheService = {
     invalidate: jest.fn(),
+  };
+
+  const mockI18nService = {
+    t: jest.fn(
+      (key: string) =>
+        key
+          .replace('messages.', '')
+          .split('.')
+          .reduce((obj: any, part) => obj?.[part], enMessages) ?? key,
+    ),
   };
 
   const mockUserEntity: UserEntity = {
@@ -51,6 +63,10 @@ describe('UsersService', () => {
         {
           provide: UserCacheService,
           useValue: mockUserCacheService,
+        },
+        {
+          provide: I18nService,
+          useValue: mockI18nService,
         },
       ],
     }).compile();

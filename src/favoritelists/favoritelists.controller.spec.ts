@@ -124,7 +124,11 @@ describe('FavoritelistsController', () => {
             { id: 1, name: 'List 1', createdAt: new Date() },
             { id: 2, name: 'List 2', createdAt: new Date() },
           ],
-          pagination: { page: 1, limit: 10, total: 2 },
+          page: 1,
+          limit: 10,
+          totalItems: 2,
+          isFirstPage: true,
+          isLastPage: true,
         },
       };
       mockFavoritelistsService.getAllUserFavoritelists.mockResolvedValue(

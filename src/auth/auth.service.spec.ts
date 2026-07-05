@@ -3,11 +3,13 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { HttpStatus } from '@nestjs/common';
+import { I18nService } from 'nestjs-i18n';
 import { AuthService } from './auth.service';
 import { UserEntity } from '@/users/entity/user.entity';
 import { UserCacheService } from '@/users/user-cache.service';
 import { Roles } from '@/common/constants/roles.constant';
 import * as bcrypt from 'bcrypt';
+import * as enMessages from '@/i18n/en-US/messages.json';
 
 jest.mock('bcrypt');
 
@@ -38,6 +40,16 @@ describe('AuthService', () => {
     invalidate: jest.fn(),
   };
 
+  const mockI18nService = {
+    t: jest.fn(
+      (key: string) =>
+        key
+          .replace('messages.', '')
+          .split('.')
+          .reduce((obj: any, part) => obj?.[part], enMessages) ?? key,
+    ),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -57,6 +69,10 @@ describe('AuthService', () => {
         {
           provide: UserCacheService,
           useValue: mockUserCacheService,
+        },
+        {
+          provide: I18nService,
+          useValue: mockI18nService,
         },
       ],
     }).compile();

@@ -1,9 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { I18nService } from 'nestjs-i18n';
 import { FavoritelistsService } from './favoritelists.service';
 import { FavoritelistEntity } from './entity/favoritelist.entity';
 import { MovieEntity } from '@/movies/entity/movie.entity';
 import { MoviesService } from '@/movies/movies.service';
+import * as enMessages from '@/i18n/en-US/messages.json';
 
 describe('FavoritelistsService', () => {
   let service: FavoritelistsService;
@@ -34,6 +36,16 @@ describe('FavoritelistsService', () => {
     getMovieDetails: jest.fn(),
   };
 
+  const mockI18nService = {
+    t: jest.fn(
+      (key: string) =>
+        key
+          .replace('messages.', '')
+          .split('.')
+          .reduce((obj: any, part) => obj?.[part], enMessages) ?? key,
+    ),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -49,6 +61,10 @@ describe('FavoritelistsService', () => {
         {
           provide: MoviesService,
           useValue: mockMoviesService,
+        },
+        {
+          provide: I18nService,
+          useValue: mockI18nService,
         },
       ],
     }).compile();

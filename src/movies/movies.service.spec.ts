@@ -1,7 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { I18nService } from 'nestjs-i18n';
 import { MoviesService } from './movies.service';
+import * as enMessages from '@/i18n/en-US/messages.json';
 
 describe('MoviesService', () => {
   let service: MoviesService;
@@ -22,6 +24,16 @@ describe('MoviesService', () => {
     }),
   };
 
+  const mockI18nService = {
+    t: jest.fn(
+      (key: string) =>
+        key
+          .replace('messages.', '')
+          .split('.')
+          .reduce((obj: any, part) => obj?.[part], enMessages) ?? key,
+    ),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
@@ -30,6 +42,10 @@ describe('MoviesService', () => {
         {
           provide: ConfigService,
           useValue: mockConfigService,
+        },
+        {
+          provide: I18nService,
+          useValue: mockI18nService,
         },
       ],
     }).compile();
