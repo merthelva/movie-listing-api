@@ -94,7 +94,7 @@ describe('MoviesController', () => {
 
       const result = await controller.searchMovies(searchDto);
 
-      expect(mockMoviesService.searchMovies).toHaveBeenCalledWith('test', 1);
+      expect(mockMoviesService.searchMovies).toHaveBeenCalledWith('test', 1, undefined);
       expect(result).toEqual(mockMovieSearchResult);
     });
 
@@ -118,7 +118,7 @@ describe('MoviesController', () => {
 
       const result = await controller.searchMovies(searchDto);
 
-      expect(mockMoviesService.searchMovies).toHaveBeenCalledWith('test', 2);
+      expect(mockMoviesService.searchMovies).toHaveBeenCalledWith('test', 2, undefined);
       expect(result.page).toBe(2);
     });
   });
@@ -130,9 +130,9 @@ describe('MoviesController', () => {
         data: mockMovieDetails,
       });
 
-      const result = await controller.getMovieDetails(1);
+      const result = await controller.getMovieDetails(1, {});
 
-      expect(mockMoviesService.getMovieDetails).toHaveBeenCalledWith(1);
+      expect(mockMoviesService.getMovieDetails).toHaveBeenCalledWith(1, undefined);
       expect(result).toEqual(mockMovieDetails);
     });
 
@@ -143,7 +143,7 @@ describe('MoviesController', () => {
         message: 'Invalid tmdbId',
       });
 
-      await expect(controller.getMovieDetails(-1)).rejects.toThrow();
+      await expect(controller.getMovieDetails(-1, {})).rejects.toThrow();
     });
 
     it('should throw on not found errors', async () => {
@@ -153,7 +153,7 @@ describe('MoviesController', () => {
         message: 'Movie not found',
       });
 
-      await expect(controller.getMovieDetails(999999)).rejects.toThrow();
+      await expect(controller.getMovieDetails(999999, {})).rejects.toThrow();
     });
   });
 
@@ -164,9 +164,9 @@ describe('MoviesController', () => {
         data: mockMovieCast,
       });
 
-      const result = await controller.getMovieCast(1);
+      const result = await controller.getMovieCast(1, {});
 
-      expect(mockMoviesService.getMovieCast).toHaveBeenCalledWith(1);
+      expect(mockMoviesService.getMovieCast).toHaveBeenCalledWith(1, undefined);
       expect(result).toEqual(mockMovieCast);
     });
 
@@ -177,7 +177,7 @@ describe('MoviesController', () => {
         message: 'Failed to fetch cast',
       });
 
-      await expect(controller.getMovieCast(1)).rejects.toThrow();
+      await expect(controller.getMovieCast(1, {})).rejects.toThrow();
     });
 
     it('should throw on invalid tmdbId', async () => {
@@ -187,7 +187,7 @@ describe('MoviesController', () => {
         message: 'Invalid tmdbId',
       });
 
-      await expect(controller.getMovieCast(-1)).rejects.toThrow();
+      await expect(controller.getMovieCast(-1, {})).rejects.toThrow();
     });
   });
 
@@ -198,9 +198,9 @@ describe('MoviesController', () => {
         data: mockMovieTrailer,
       });
 
-      const result = await controller.getMovieTrailer(1);
+      const result = await controller.getMovieTrailer(1, {});
 
-      expect(mockMoviesService.getMovieTrailer).toHaveBeenCalledWith(1);
+      expect(mockMoviesService.getMovieTrailer).toHaveBeenCalledWith(1, undefined);
       expect(result).toEqual(mockMovieTrailer);
     });
 
@@ -211,7 +211,7 @@ describe('MoviesController', () => {
         message: 'No trailer found',
       });
 
-      await expect(controller.getMovieTrailer(1)).rejects.toThrow();
+      await expect(controller.getMovieTrailer(1, {})).rejects.toThrow();
     });
 
     it('should throw on invalid tmdbId', async () => {
@@ -221,7 +221,7 @@ describe('MoviesController', () => {
         message: 'Invalid tmdbId',
       });
 
-      await expect(controller.getMovieTrailer(0)).rejects.toThrow();
+      await expect(controller.getMovieTrailer(0, {})).rejects.toThrow();
     });
   });
 
@@ -238,6 +238,7 @@ describe('MoviesController', () => {
       expect(mockMoviesService.getMoviesByCategory).toHaveBeenCalledWith(
         'popular',
         1,
+        undefined,
       );
       expect(result).toEqual(mockMovieSearchResult);
     });
@@ -255,6 +256,7 @@ describe('MoviesController', () => {
       expect(mockMoviesService.getMoviesByCategory).toHaveBeenCalledWith(
         'popular',
         2,
+        undefined,
       );
       expect(result.page).toBe(2);
     });
@@ -271,6 +273,7 @@ describe('MoviesController', () => {
       expect(mockMoviesService.getMoviesByCategory).toHaveBeenCalledWith(
         'upcoming',
         1,
+        undefined,
       );
     });
   });

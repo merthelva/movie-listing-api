@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { compare, hash } from 'bcrypt';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 import { Repository } from 'typeorm';
 
 import { Roles } from '@/common/constants/roles.constant';
@@ -23,11 +24,13 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private userCacheService: UserCacheService,
+    private i18n: I18nService,
   ) {}
 
   async register(
     createUserDto: CreateUserDto,
   ): Promise<GenericResponseType<UserEntity>> {
+    const lang = I18nContext.current()?.lang;
     try {
       const foundUser = await this.usersRepository.findOne({
         where: { email: createUserDto.email.toLowerCase() },
@@ -36,7 +39,7 @@ export class AuthService {
         return {
           code: HttpStatus.FORBIDDEN,
           status: 'error',
-          message: 'User with this email already exists',
+          message: this.i18n.t('messages.auth.USER_ALREADY_EXISTS', { lang }),
         };
       }
 
@@ -60,7 +63,7 @@ export class AuthService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while registering the user.',
+        message: this.i18n.t('messages.auth.REGISTER_ERROR', { lang }),
       };
     }
   }
@@ -69,6 +72,7 @@ export class AuthService {
     email: string,
     password: string,
   ): Promise<GenericResponseType<UserEntity & { accessToken: string }>> {
+    const lang = I18nContext.current()?.lang;
     try {
       const user = await this.usersRepository.findOne({
         where: { email: email.toLowerCase() },
@@ -77,7 +81,7 @@ export class AuthService {
         return {
           code: HttpStatus.UNAUTHORIZED,
           status: 'error',
-          message: 'Invalid credentials',
+          message: this.i18n.t('messages.auth.INVALID_CREDENTIALS', { lang }),
         };
       }
 
@@ -86,7 +90,7 @@ export class AuthService {
         return {
           code: HttpStatus.UNAUTHORIZED,
           status: 'error',
-          message: 'Invalid credentials',
+          message: this.i18n.t('messages.auth.INVALID_CREDENTIALS', { lang }),
         };
       }
 
@@ -108,7 +112,7 @@ export class AuthService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while logging the user in.',
+        message: this.i18n.t('messages.auth.LOGIN_ERROR', { lang }),
       };
     }
   }
@@ -116,6 +120,7 @@ export class AuthService {
   async logout(
     userId: number,
   ): Promise<GenericResponseType<SuccessResponseType>> {
+    const lang = I18nContext.current()?.lang;
     try {
       await this.usersRepository.increment({ id: userId }, 'tokenVersion', 1);
       this.userCacheService.invalidate(userId);
@@ -123,7 +128,7 @@ export class AuthService {
         status: 'success',
         data: {
           success: true,
-          message: 'User has been logged out successfully.',
+          message: this.i18n.t('messages.auth.LOGOUT_SUCCESS', { lang }),
         },
       };
     } catch (error) {
@@ -131,7 +136,7 @@ export class AuthService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while logging out.',
+        message: this.i18n.t('messages.auth.LOGOUT_ERROR', { lang }),
       };
     }
   }
@@ -140,12 +145,15 @@ export class AuthService {
     id: number,
     currentUserId: number,
   ): Promise<GenericResponseType<SuccessResponseType>> {
+    const lang = I18nContext.current()?.lang;
     try {
       if (id !== currentUserId) {
         return {
           code: HttpStatus.UNAUTHORIZED,
           status: 'error',
-          message: 'You can only delete your own account.',
+          message: this.i18n.t('messages.auth.DELETE_OWN_ACCOUNT_ONLY', {
+            lang,
+          }),
         };
       }
 
@@ -154,7 +162,7 @@ export class AuthService {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
-          message: 'User not found',
+          message: this.i18n.t('messages.auth.USER_NOT_FOUND', { lang }),
         };
       }
 
@@ -166,8 +174,9 @@ export class AuthService {
           return {
             code: HttpStatus.FORBIDDEN,
             status: 'error',
-            message:
-              'The account cannot be removed because it is the only admin account. Please assign another user as admin before deleting this account.',
+            message: this.i18n.t('messages.auth.ONLY_ADMIN_CANNOT_DELETE', {
+              lang,
+            }),
           };
         }
       }
@@ -179,7 +188,9 @@ export class AuthService {
         status: 'success',
         data: {
           success: true,
-          message: 'The account has been removed successfully.',
+          message: this.i18n.t('messages.auth.ACCOUNT_REMOVED_SUCCESS', {
+            lang,
+          }),
         },
       };
     } catch (error) {
@@ -187,7 +198,7 @@ export class AuthService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while removing the user account.',
+        message: this.i18n.t('messages.auth.REMOVE_ACCOUNT_ERROR', { lang }),
       };
     }
   }

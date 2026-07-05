@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { hash } from 'bcrypt';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 import { Repository } from 'typeorm';
 
 import { Roles } from '@/common/constants/roles.constant';
@@ -27,11 +28,13 @@ export class UsersService {
     private usersRepository: Repository<UserEntity>,
     private configService: ConfigService,
     private userCacheService: UserCacheService,
+    private i18n: I18nService,
   ) {}
 
   async getCurrentUser(
     userId: number,
   ): Promise<GenericResponseType<UserEntity>> {
+    const lang = I18nContext.current()?.lang;
     try {
       const foundUser = await this.usersRepository.findOne({
         where: { id: userId },
@@ -40,7 +43,7 @@ export class UsersService {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
-          message: 'User not found',
+          message: this.i18n.t('messages.users.USER_NOT_FOUND', { lang }),
         };
       }
 
@@ -53,7 +56,7 @@ export class UsersService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while getting the user details.',
+        message: this.i18n.t('messages.users.GET_USER_ERROR', { lang }),
       };
     }
   }
@@ -63,12 +66,13 @@ export class UsersService {
     currentUser: UserEntity,
     updatedFields: UpdateUserDto,
   ): Promise<GenericResponseType<SuccessResponseType>> {
+    const lang = I18nContext.current()?.lang;
     try {
       if (hasNoUpdateFields(updatedFields)) {
         return {
           code: HttpStatus.BAD_REQUEST,
           status: 'error',
-          message: 'Please provide at least one field to update.',
+          message: this.i18n.t('messages.users.NO_UPDATE_FIELDS', { lang }),
         };
       }
 
@@ -79,7 +83,7 @@ export class UsersService {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
-          message: 'User not found',
+          message: this.i18n.t('messages.users.USER_NOT_FOUND', { lang }),
         };
       }
 
@@ -87,8 +91,9 @@ export class UsersService {
         return {
           code: HttpStatus.UNAUTHORIZED,
           status: 'error',
-          message:
-            'You are not allowed to update details of other users. Please provide the \"id\" for the current user as the path parameter',
+          message: this.i18n.t('messages.users.CANNOT_UPDATE_OTHER_USER', {
+            lang,
+          }),
         };
       }
 
@@ -99,8 +104,7 @@ export class UsersService {
         return {
           code: HttpStatus.FORBIDDEN,
           status: 'error',
-          message:
-            'Please provide a different email to update. The provided email is the same as the current email.',
+          message: this.i18n.t('messages.users.SAME_EMAIL', { lang }),
         };
       }
 
@@ -134,8 +138,9 @@ export class UsersService {
           return {
             code: HttpStatus.FORBIDDEN,
             status: 'error',
-            message:
-              'A user with this email already exists. Please choose a different email.',
+            message: this.i18n.t('messages.users.EMAIL_ALREADY_EXISTS', {
+              lang,
+            }),
           };
         }
         throw dbErr;
@@ -145,7 +150,7 @@ export class UsersService {
         status: 'success',
         data: {
           success: true,
-          message: 'User details have been updated successfully.',
+          message: this.i18n.t('messages.users.UPDATE_SUCCESS', { lang }),
         },
       };
     } catch (error) {
@@ -153,7 +158,7 @@ export class UsersService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while updating the user details.',
+        message: this.i18n.t('messages.users.UPDATE_ERROR', { lang }),
       };
     }
   }
@@ -161,6 +166,7 @@ export class UsersService {
   async getAllUsers(
     paginationDto?: PaginationDto,
   ): Promise<GenericResponseType<ListUsersResponseType>> {
+    const lang = I18nContext.current()?.lang;
     try {
       const { page = 1, limit = 10, search } = paginationDto || {};
       const skip = (page - 1) * limit;
@@ -190,7 +196,7 @@ export class UsersService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while getting the users.',
+        message: this.i18n.t('messages.users.GET_USERS_ERROR', { lang }),
       };
     }
   }
@@ -200,12 +206,15 @@ export class UsersService {
     userIdToUpdate: number,
     newRole: RoleType,
   ): Promise<GenericResponseType<SuccessResponseType>> {
+    const lang = I18nContext.current()?.lang;
     try {
       if (currentUserId === userIdToUpdate) {
         return {
           code: HttpStatus.FORBIDDEN,
           status: 'error',
-          message: 'User cannot change (his/her) own role.',
+          message: this.i18n.t('messages.users.CANNOT_CHANGE_OWN_ROLE', {
+            lang,
+          }),
         };
       }
 
@@ -216,7 +225,7 @@ export class UsersService {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
-          message: 'User not found',
+          message: this.i18n.t('messages.users.USER_NOT_FOUND', { lang }),
         };
       }
 
@@ -224,7 +233,10 @@ export class UsersService {
         return {
           code: HttpStatus.BAD_REQUEST,
           status: 'error',
-          message: `The user already has the role of "${newRole}". Please provide a different role to update.`,
+          message: this.i18n.t('messages.users.ROLE_ALREADY_SET', {
+            lang,
+            args: { role: newRole },
+          }),
         };
       }
 
@@ -237,7 +249,7 @@ export class UsersService {
         status: 'success',
         data: {
           success: true,
-          message: 'User role has been updated successfully.',
+          message: this.i18n.t('messages.users.UPDATE_ROLE_SUCCESS', { lang }),
         },
       };
     } catch (error) {
@@ -245,7 +257,7 @@ export class UsersService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while updating the user role.',
+        message: this.i18n.t('messages.users.UPDATE_ROLE_ERROR', { lang }),
       };
     }
   }
@@ -254,13 +266,13 @@ export class UsersService {
     currentUserId: number,
     userIdToDelete: number,
   ): Promise<GenericResponseType<SuccessResponseType>> {
+    const lang = I18nContext.current()?.lang;
     try {
       if (currentUserId === userIdToDelete) {
         return {
           code: HttpStatus.FORBIDDEN,
           status: 'error',
-          message:
-            'User cannot delete (him/her)self. In order to delete the current user, please use /auth/remove/:id endpoint instead.',
+          message: this.i18n.t('messages.users.CANNOT_DELETE_SELF', { lang }),
         };
       }
 
@@ -271,7 +283,7 @@ export class UsersService {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
-          message: 'User not found',
+          message: this.i18n.t('messages.users.USER_NOT_FOUND', { lang }),
         };
       }
 
@@ -283,8 +295,9 @@ export class UsersService {
           return {
             code: HttpStatus.FORBIDDEN,
             status: 'error',
-            message:
-              'The account cannot be removed because it is the only admin account. Please assign another user as admin before deleting this account.',
+            message: this.i18n.t('messages.users.ONLY_ADMIN_CANNOT_DELETE', {
+              lang,
+            }),
           };
         }
       }
@@ -296,7 +309,7 @@ export class UsersService {
         status: 'success',
         data: {
           success: true,
-          message: 'User has been deleted successfully.',
+          message: this.i18n.t('messages.users.DELETE_SUCCESS', { lang }),
         },
       };
     } catch (error) {
@@ -304,7 +317,7 @@ export class UsersService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while deleting the user.',
+        message: this.i18n.t('messages.users.DELETE_ERROR', { lang }),
       };
     }
   }

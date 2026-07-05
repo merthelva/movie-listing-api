@@ -1,7 +1,7 @@
 import helmet from 'helmet';
 import 'reflect-metadata';
 
-import { ValidationPipe } from '@nestjs/common';
+import { I18nValidationPipe } from 'nestjs-i18n';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 
@@ -19,7 +19,7 @@ async function bootstrap() {
   app.use(json({ limit: '1mb' }));
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalPipes(
-    new ValidationPipe({
+    new I18nValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,

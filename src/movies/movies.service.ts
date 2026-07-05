@@ -1,6 +1,8 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
+import { I18nContext, I18nService } from 'nestjs-i18n';
+
 import { delayInMs } from '@/common/utils/delay-ms.utils';
 import { GenericResponseType } from '@/common/types/generic-response.type';
 import { TtlCache } from '@/common/utils/ttl-cache.utils';
@@ -35,7 +37,10 @@ export class MoviesService {
 
   private readonly logger = new Logger(MoviesService.name);
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private i18n: I18nService,
+  ) {
     this.readAccessToken = this.configService.getOrThrow<string>(
       'TMDB_API_READ_ACCESS_TOKEN',
     );
@@ -62,8 +67,10 @@ export class MoviesService {
   async searchMovies(
     query: string,
     page: number = 1,
+    language: LocaleType = 'en-US',
   ): Promise<GenericResponseType<SearchMovieResultType>> {
-    const cacheKey = `search:${query.toLowerCase()}:${page}`;
+    const lang = I18nContext.current()?.lang;
+    const cacheKey = `search:${query.toLowerCase()}:${page}:${language}`;
     const cachedMovieResults = this.cache.get(cacheKey);
     if (cachedMovieResults) {
       return {
@@ -72,7 +79,7 @@ export class MoviesService {
       };
     }
 
-    const url = `${this.baseUrl}/search/movie?query=${encodeURIComponent(query)}&page=${page}`;
+    const url = `${this.baseUrl}/search/movie?query=${encodeURIComponent(query)}&page=${page}&language=${language}`;
 
     try {
       const response = await this.fetchWithRetry(url);
@@ -85,8 +92,11 @@ export class MoviesService {
           status: 'error',
           message:
             response.status === 404
-              ? `No results found for query "${query}".`
-              : 'An error occurred while fetching movies from TMDB.',
+              ? this.i18n.t('messages.movies.SEARCH_NOT_FOUND', {
+                  lang,
+                  args: { query },
+                })
+              : this.i18n.t('messages.movies.SEARCH_ERROR', { lang }),
         };
       }
 
@@ -116,7 +126,7 @@ export class MoviesService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while fetching movies from TMDB.',
+        message: this.i18n.t('messages.movies.SEARCH_ERROR', { lang }),
       };
     }
   }
@@ -125,6 +135,7 @@ export class MoviesService {
     tmdbId: number,
     language: LocaleType = 'en-US',
   ): Promise<GenericResponseType<MovieDetailsType>> {
+    const lang = I18nContext.current()?.lang;
     const cacheKey = `movie:${tmdbId}:${language}`;
     const cachedMovieDetails = this.cache.get(cacheKey);
     if (cachedMovieDetails) {
@@ -138,8 +149,7 @@ export class MoviesService {
       return {
         code: HttpStatus.BAD_REQUEST,
         status: 'error',
-        message:
-          'Invalid "tmdbId" value is provided. It must be a positive integer.',
+        message: this.i18n.t('messages.movies.INVALID_TMDB_ID', { lang }),
       };
     }
 
@@ -156,8 +166,11 @@ export class MoviesService {
           status: 'error',
           message:
             response.status === 404
-              ? `Movie with id ${tmdbId} is not found in TMDB.`
-              : 'An error occurred while fetching movie details from TMDB.',
+              ? this.i18n.t('messages.movies.MOVIE_NOT_FOUND', {
+                  lang,
+                  args: { tmdbId },
+                })
+              : this.i18n.t('messages.movies.DETAILS_ERROR', { lang }),
         };
       }
 
@@ -187,15 +200,17 @@ export class MoviesService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while fetching movie details from TMDB.',
+        message: this.i18n.t('messages.movies.DETAILS_ERROR', { lang }),
       };
     }
   }
 
   async getMovieCast(
     tmdbId: number,
+    language: LocaleType = 'en-US',
   ): Promise<GenericResponseType<MovieCastResponseType['cast']>> {
-    const cacheKey = `movie-cast:${tmdbId}`;
+    const lang = I18nContext.current()?.lang;
+    const cacheKey = `movie-cast:${tmdbId}:${language}`;
     const cachedMovieCast = this.cache.get(cacheKey);
     if (cachedMovieCast) {
       return {
@@ -208,12 +223,11 @@ export class MoviesService {
       return {
         code: HttpStatus.BAD_REQUEST,
         status: 'error',
-        message:
-          'Invalid "tmdbId" value is provided. It must be a positive integer.',
+        message: this.i18n.t('messages.movies.INVALID_TMDB_ID', { lang }),
       };
     }
 
-    const url = `${this.baseUrl}/movie/${tmdbId}/credits`;
+    const url = `${this.baseUrl}/movie/${tmdbId}/credits?language=${language}`;
 
     try {
       const response = await this.fetchWithRetry(url);
@@ -226,8 +240,11 @@ export class MoviesService {
           status: 'error',
           message:
             response.status === 404
-              ? `Movie with id ${tmdbId} is not found in TMDB.`
-              : 'An error occurred while fetching movie cast from TMDB.',
+              ? this.i18n.t('messages.movies.CAST_NOT_FOUND', {
+                  lang,
+                  args: { tmdbId },
+                })
+              : this.i18n.t('messages.movies.CAST_ERROR', { lang }),
         };
       }
 
@@ -242,6 +259,8 @@ export class MoviesService {
         }),
       );
 
+      this.cache.set(cacheKey, cachedMovieCastValue);
+
       return { status: 'success', data: cachedMovieCastValue };
     } catch (err) {
       this.logger.error(
@@ -251,15 +270,17 @@ export class MoviesService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while fetching movie cast from TMDB.',
+        message: this.i18n.t('messages.movies.CAST_ERROR', { lang }),
       };
     }
   }
 
   async getMovieTrailer(
     tmdbId: number,
+    language: LocaleType = 'en-US',
   ): Promise<GenericResponseType<MovieTrailerType>> {
-    const cacheKey = `movie-trailer:${tmdbId}`;
+    const lang = I18nContext.current()?.lang;
+    const cacheKey = `movie-trailer:${tmdbId}:${language}`;
     const cachedMovieTrailer = this.cache.get(cacheKey);
     if (cachedMovieTrailer) {
       return {
@@ -272,12 +293,11 @@ export class MoviesService {
       return {
         code: HttpStatus.BAD_REQUEST,
         status: 'error',
-        message:
-          'Invalid "tmdbId" value is provided. It must be a positive integer.',
+        message: this.i18n.t('messages.movies.INVALID_TMDB_ID', { lang }),
       };
     }
 
-    const url = `${this.baseUrl}/movie/${tmdbId}/videos`;
+    const url = `${this.baseUrl}/movie/${tmdbId}/videos?language=${language}`;
 
     try {
       const response = await this.fetchWithRetry(url);
@@ -290,8 +310,11 @@ export class MoviesService {
           status: 'error',
           message:
             response.status === 404
-              ? `Movie with id ${tmdbId} is not found in TMDB.`
-              : 'An error occurred while fetching movie trailer from TMDB.',
+              ? this.i18n.t('messages.movies.TRAILER_NOT_FOUND', {
+                  lang,
+                  args: { tmdbId },
+                })
+              : this.i18n.t('messages.movies.TRAILER_ERROR', { lang }),
         };
       }
 
@@ -301,7 +324,10 @@ export class MoviesService {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
-          message: `No official trailer is found for the movie with id ${tmdbId}.`,
+          message: this.i18n.t('messages.movies.NO_OFFICIAL_TRAILER', {
+            lang,
+            args: { tmdbId },
+          }),
         };
       }
 
@@ -316,6 +342,8 @@ export class MoviesService {
           .find(({ site, type }) => site === 'YouTube' && type === 'Trailer') ??
         null;
 
+      this.cache.set(cacheKey, cachedMovieTrailerValue);
+
       return { status: 'success', data: cachedMovieTrailerValue };
     } catch (err) {
       this.logger.error(
@@ -325,7 +353,7 @@ export class MoviesService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while fetching movie trailer from TMDB.',
+        message: this.i18n.t('messages.movies.TRAILER_ERROR', { lang }),
       };
     }
   }
@@ -333,8 +361,10 @@ export class MoviesService {
   async getMoviesByCategory(
     category: MovieCategoryType,
     page: number = 1,
+    language: LocaleType = 'en-US',
   ): Promise<GenericResponseType<SearchMovieResultType>> {
-    const cacheKey = `${category}:${page}`;
+    const lang = I18nContext.current()?.lang;
+    const cacheKey = `${category}:${page}:${language}`;
     const cachedMoviesByCategory = this.cache.get(cacheKey);
     if (cachedMoviesByCategory) {
       return {
@@ -343,7 +373,7 @@ export class MoviesService {
       };
     }
 
-    const url = `${this.baseUrl}/movie/${category}?page=${page}`;
+    const url = `${this.baseUrl}/movie/${category}?page=${page}&language=${language}`;
 
     try {
       const response = await this.fetchWithRetry(url);
@@ -356,8 +386,14 @@ export class MoviesService {
           status: 'error',
           message:
             response.status === 404
-              ? `No movies found for category "${category}".`
-              : `An error occurred while fetching movies for category ${category} from TMDB.`,
+              ? this.i18n.t('messages.movies.CATEGORY_NOT_FOUND', {
+                  lang,
+                  args: { category },
+                })
+              : this.i18n.t('messages.movies.CATEGORY_ERROR', {
+                  lang,
+                  args: { category },
+                }),
         };
       }
 
@@ -387,7 +423,7 @@ export class MoviesService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while fetching movies from TMDB.',
+        message: this.i18n.t('messages.movies.FETCH_ERROR', { lang }),
       };
     }
   }

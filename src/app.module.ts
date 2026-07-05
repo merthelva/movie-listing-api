@@ -1,8 +1,11 @@
+import { join } from 'path';
+
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AcceptLanguageResolver, I18nModule } from 'nestjs-i18n';
 
 import { SeedModule } from '@/seed/seed.module';
 import { envValidationSchema } from '@/config/env.validation';
@@ -26,6 +29,14 @@ import { InitialSchema1779552504166 } from './database/migrations/1779552504166-
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV}`,
       validationSchema: envValidationSchema,
+    }),
+    I18nModule.forRoot({
+      fallbackLanguage: 'en-US',
+      loaderOptions: {
+        path: join(__dirname, '/i18n/'),
+        watch: process.env.NODE_ENV !== 'production',
+      },
+      resolvers: [AcceptLanguageResolver],
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],

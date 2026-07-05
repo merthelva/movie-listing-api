@@ -1,6 +1,7 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
+import { I18nContext, I18nService } from 'nestjs-i18n';
 import { EntityManager, Repository } from 'typeorm';
 
 import { PgViolationCodes } from '@/common/constants/pg-violation-codes.constant';
@@ -33,6 +34,7 @@ export class FavoritelistsService {
     @InjectRepository(MovieEntity)
     private movieRepository: Repository<MovieEntity>,
     private moviesService: MoviesService,
+    private i18n: I18nService,
   ) {}
 
   private async requireFavoritelistForUser(
@@ -85,6 +87,7 @@ export class FavoritelistsService {
     userId: number,
     createUserFavoritelistDto: CreateFavoritelistDto,
   ): Promise<GenericResponseType<FavoritelistEntity>> {
+    const lang = I18nContext.current()?.lang;
     try {
       const favoritelist = this.favoritelistRepository.create({
         name: createUserFavoritelistDto.name,
@@ -100,14 +103,17 @@ export class FavoritelistsService {
         return {
           code: HttpStatus.FORBIDDEN,
           status: 'error',
-          message: `Favoritelist with name ${createUserFavoritelistDto.name} for this user already exists`,
+          message: this.i18n.t('messages.favoritelists.CREATE_DUPLICATE', {
+            lang,
+            args: { name: createUserFavoritelistDto.name },
+          }),
         };
       }
       this.logger.error(error);
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while creating the favoritelist.',
+        message: this.i18n.t('messages.favoritelists.CREATE_ERROR', { lang }),
       };
     }
   }
@@ -116,6 +122,7 @@ export class FavoritelistsService {
     userId: number,
     id: number,
   ): Promise<GenericResponseType<SuccessResponseType>> {
+    const lang = I18nContext.current()?.lang;
     try {
       const foundUserFavoritelist = await this.favoritelistRepository.findOne({
         where: { id: id, user: { id: userId } },
@@ -124,7 +131,10 @@ export class FavoritelistsService {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
-          message: `Favoritelist with id ${id} for this user is not found.`,
+          message: this.i18n.t('messages.favoritelists.NOT_FOUND', {
+            lang,
+            args: { id },
+          }),
         };
       }
 
@@ -134,7 +144,9 @@ export class FavoritelistsService {
         status: 'success',
         data: {
           success: true,
-          message: 'The favoritelist has been deleted successfully.',
+          message: this.i18n.t('messages.favoritelists.DELETE_SUCCESS', {
+            lang,
+          }),
         },
       };
     } catch (error) {
@@ -142,7 +154,7 @@ export class FavoritelistsService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while deleting the favoritelist.',
+        message: this.i18n.t('messages.favoritelists.DELETE_ERROR', { lang }),
       };
     }
   }
@@ -151,6 +163,7 @@ export class FavoritelistsService {
     userId: number,
     paginationDto?: PaginationDto,
   ): Promise<GenericResponseType<ListUserFavoritelistsResponseType>> {
+    const lang = I18nContext.current()?.lang;
     try {
       const { page = 1, limit = 10 } = paginationDto || {};
       const skip = (page - 1) * limit;
@@ -184,7 +197,9 @@ export class FavoritelistsService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while getting the user favoritelists.',
+        message: this.i18n.t('messages.favoritelists.GET_LISTS_ERROR', {
+          lang,
+        }),
       };
     }
   }
@@ -194,6 +209,7 @@ export class FavoritelistsService {
     id: number,
     paginationDto?: PaginationDto,
   ): Promise<GenericResponseType<ListUserFavoritelistMoviesResponseType>> {
+    const lang = I18nContext.current()?.lang;
     try {
       const foundUserFavoritelist = await this.favoritelistRepository.findOne({
         where: { id, user: { id: userId } },
@@ -203,7 +219,10 @@ export class FavoritelistsService {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
-          message: `Favoritelist with id ${id} for the user is not found.`,
+          message: this.i18n.t('messages.favoritelists.LIST_NOT_FOUND', {
+            lang,
+            args: { id },
+          }),
         };
       }
 
@@ -238,8 +257,9 @@ export class FavoritelistsService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message:
-          'An error occurred while getting the user favoritelist movies.',
+        message: this.i18n.t('messages.favoritelists.GET_MOVIES_ERROR', {
+          lang,
+        }),
       };
     }
   }
@@ -249,6 +269,7 @@ export class FavoritelistsService {
     favoritelistId: number,
     movieTmdbId: number,
   ): Promise<GenericResponseType<SuccessResponseType>> {
+    const lang = I18nContext.current()?.lang;
     try {
       // Resolve the movie first (external API) before opening a DB transaction.
       const movieDetailsResponse =
@@ -297,7 +318,9 @@ export class FavoritelistsService {
         status: 'success',
         data: {
           success: true,
-          message: 'Movie has been added to the favoritelist.',
+          message: this.i18n.t('messages.favoritelists.ADD_MOVIE_SUCCESS', {
+            lang,
+          }),
         },
       };
     } catch (err: unknown) {
@@ -306,14 +329,20 @@ export class FavoritelistsService {
           return {
             code: HttpStatus.NOT_FOUND,
             status: 'error',
-            message: `Favoritelist with id ${favoritelistId} for the user is not found.`,
+            message: this.i18n.t('messages.favoritelists.LIST_NOT_FOUND', {
+              lang,
+              args: { id: favoritelistId },
+            }),
           };
         }
         if (err.message === ErrorTokens.MOVIE_ALREADY_IN_FAVORITELIST) {
           return {
             code: HttpStatus.FORBIDDEN,
             status: 'error',
-            message: 'This movie is already in the favoritelist for this user.',
+            message: this.i18n.t(
+              'messages.favoritelists.MOVIE_ALREADY_IN_LIST',
+              { lang },
+            ),
           };
         }
       }
@@ -322,8 +351,9 @@ export class FavoritelistsService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message:
-          'An error occurred while adding the movie to the favoritelist.',
+        message: this.i18n.t('messages.favoritelists.ADD_MOVIE_ERROR', {
+          lang,
+        }),
       };
     }
   }
@@ -333,6 +363,7 @@ export class FavoritelistsService {
     favoritelistId: number,
     movieTmdbId: number,
   ): Promise<GenericResponseType<SuccessResponseType>> {
+    const lang = I18nContext.current()?.lang;
     try {
       const foundUserFavoritelist = await this.favoritelistRepository.findOne({
         where: { id: favoritelistId, user: { id: userId } },
@@ -341,7 +372,10 @@ export class FavoritelistsService {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
-          message: `Favoritelist with id ${favoritelistId} for the user is not found.`,
+          message: this.i18n.t('messages.favoritelists.LIST_NOT_FOUND', {
+            lang,
+            args: { id: favoritelistId },
+          }),
         };
       }
 
@@ -354,7 +388,10 @@ export class FavoritelistsService {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
-          message: `Movie with id ${movieTmdbId} for the user is not found in this favoritelist.`,
+          message: this.i18n.t('messages.favoritelists.MOVIE_NOT_IN_LIST', {
+            lang,
+            args: { movieTmdbId },
+          }),
         };
       }
 
@@ -370,7 +407,9 @@ export class FavoritelistsService {
         status: 'success',
         data: {
           success: true,
-          message: 'Movie has been deleted from the favoritelist successfully.',
+          message: this.i18n.t('messages.favoritelists.REMOVE_MOVIE_SUCCESS', {
+            lang,
+          }),
         },
       };
     } catch (error) {
@@ -378,8 +417,9 @@ export class FavoritelistsService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message:
-          'An error occurred while deleting the movie from the favoritelist.',
+        message: this.i18n.t('messages.favoritelists.REMOVE_MOVIE_ERROR', {
+          lang,
+        }),
       };
     }
   }
@@ -389,12 +429,15 @@ export class FavoritelistsService {
     favoritelistId: number,
     updatedFields: UpdateFavoritelistDto,
   ): Promise<GenericResponseType<SuccessResponseType>> {
+    const lang = I18nContext.current()?.lang;
     try {
       if (hasNoUpdateFields(updatedFields)) {
         return {
           code: HttpStatus.BAD_REQUEST,
           status: 'error',
-          message: 'Please provide at least one field to update.',
+          message: this.i18n.t('messages.favoritelists.NO_UPDATE_FIELDS', {
+            lang,
+          }),
         };
       }
 
@@ -405,7 +448,10 @@ export class FavoritelistsService {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
-          message: `Favoritelist with id ${favoritelistId} for the user is not found.`,
+          message: this.i18n.t('messages.favoritelists.LIST_NOT_FOUND', {
+            lang,
+            args: { id: favoritelistId },
+          }),
         };
       }
 
@@ -416,8 +462,7 @@ export class FavoritelistsService {
         return {
           code: HttpStatus.FORBIDDEN,
           status: 'error',
-          message:
-            'Please provide a different name to update. The provided name is the same as the current name.',
+          message: this.i18n.t('messages.favoritelists.SAME_NAME', { lang }),
         };
       }
 
@@ -430,7 +475,9 @@ export class FavoritelistsService {
         status: 'success',
         data: {
           success: true,
-          message: 'Favoritelist has been updated successfully.',
+          message: this.i18n.t('messages.favoritelists.UPDATE_SUCCESS', {
+            lang,
+          }),
         },
       };
     } catch (error) {
@@ -439,14 +486,17 @@ export class FavoritelistsService {
         return {
           code: HttpStatus.FORBIDDEN,
           status: 'error',
-          message: `Favoritelist with name ${updatedFields.name} for this user already exists`,
+          message: this.i18n.t('messages.favoritelists.UPDATE_DUPLICATE', {
+            lang,
+            args: { name: updatedFields.name },
+          }),
         };
       }
       this.logger.error(error);
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while updating the favoritelist.',
+        message: this.i18n.t('messages.favoritelists.UPDATE_ERROR', { lang }),
       };
     }
   }
@@ -457,6 +507,7 @@ export class FavoritelistsService {
   ): Promise<
     GenericResponseType<Array<FavoritelistWithMovieStatusResponseType>>
   > {
+    const lang = I18nContext.current()?.lang;
     try {
       const results: Array<FavoritelistWithMovieStatusResponseType> =
         await this.favoritelistRepository
@@ -481,8 +532,9 @@ export class FavoritelistsService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message:
-          'An error occurred while fetching the user favoritelists with movie status.',
+        message: this.i18n.t('messages.favoritelists.GET_WITH_STATUS_ERROR', {
+          lang,
+        }),
       };
     }
   }
@@ -492,6 +544,7 @@ export class FavoritelistsService {
     favoritelistId: number,
     movieTmdbId: number,
   ): Promise<GenericResponseType<CheckIsMovieInUserFavoritelistResponseType>> {
+    const lang = I18nContext.current()?.lang;
     try {
       const foundUserFavoritelist = await this.favoritelistRepository.findOne({
         where: { id: favoritelistId, user: { id: userId } },
@@ -501,7 +554,10 @@ export class FavoritelistsService {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
-          message: `Favoritelist with id ${favoritelistId} for the user is not found.`,
+          message: this.i18n.t('messages.favoritelists.LIST_NOT_FOUND', {
+            lang,
+            args: { id: favoritelistId },
+          }),
         };
       }
 
@@ -522,8 +578,9 @@ export class FavoritelistsService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message:
-          'An error occurred while checking the movie in the favoritelist.',
+        message: this.i18n.t('messages.favoritelists.CHECK_MOVIE_ERROR', {
+          lang,
+        }),
       };
     }
   }

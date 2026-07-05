@@ -1,6 +1,7 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
+import { I18nContext, I18nService } from 'nestjs-i18n';
 import { EntityManager, Repository } from 'typeorm';
 
 import { PgViolationCodes } from '@/common/constants/pg-violation-codes.constant';
@@ -33,6 +34,7 @@ export class WatchlistsService {
     @InjectRepository(MovieEntity)
     private movieRepository: Repository<MovieEntity>,
     private moviesService: MoviesService,
+    private i18n: I18nService,
   ) {}
 
   private async requireWatchlistForUser(
@@ -85,6 +87,7 @@ export class WatchlistsService {
     userId: number,
     createUserWatchlistDto: CreateWatchlistDto,
   ): Promise<GenericResponseType<WatchlistEntity>> {
+    const lang = I18nContext.current()?.lang;
     try {
       const watchlist = this.watchlistRepository.create({
         name: createUserWatchlistDto.name,
@@ -100,14 +103,17 @@ export class WatchlistsService {
         return {
           code: HttpStatus.FORBIDDEN,
           status: 'error',
-          message: `Watchlist with name ${createUserWatchlistDto.name} for this user already exists`,
+          message: this.i18n.t('messages.watchlists.CREATE_DUPLICATE', {
+            lang,
+            args: { name: createUserWatchlistDto.name },
+          }),
         };
       }
       this.logger.error(error);
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while creating the watchlist.',
+        message: this.i18n.t('messages.watchlists.CREATE_ERROR', { lang }),
       };
     }
   }
@@ -116,6 +122,7 @@ export class WatchlistsService {
     userId: number,
     id: number,
   ): Promise<GenericResponseType<SuccessResponseType>> {
+    const lang = I18nContext.current()?.lang;
     try {
       const foundUserWatchlist = await this.watchlistRepository.findOne({
         where: { id: id, user: { id: userId } },
@@ -124,7 +131,10 @@ export class WatchlistsService {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
-          message: `Watchlist with id ${id} for this user is not found.`,
+          message: this.i18n.t('messages.watchlists.NOT_FOUND', {
+            lang,
+            args: { id },
+          }),
         };
       }
 
@@ -134,7 +144,7 @@ export class WatchlistsService {
         status: 'success',
         data: {
           success: true,
-          message: 'The watchlist has been deleted successfully.',
+          message: this.i18n.t('messages.watchlists.DELETE_SUCCESS', { lang }),
         },
       };
     } catch (error) {
@@ -142,7 +152,7 @@ export class WatchlistsService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while deleting the watchlist.',
+        message: this.i18n.t('messages.watchlists.DELETE_ERROR', { lang }),
       };
     }
   }
@@ -151,6 +161,7 @@ export class WatchlistsService {
     userId: number,
     paginationDto?: PaginationDto,
   ): Promise<GenericResponseType<ListUserWatchlistsResponseType>> {
+    const lang = I18nContext.current()?.lang;
     try {
       const { page = 1, limit = 10 } = paginationDto || {};
       const skip = (page - 1) * limit;
@@ -181,7 +192,7 @@ export class WatchlistsService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while getting the user watchlists.',
+        message: this.i18n.t('messages.watchlists.GET_LISTS_ERROR', { lang }),
       };
     }
   }
@@ -191,6 +202,7 @@ export class WatchlistsService {
     id: number,
     paginationDto?: PaginationDto,
   ): Promise<GenericResponseType<ListUserWatchlistMoviesResponseType>> {
+    const lang = I18nContext.current()?.lang;
     try {
       // Verify watchlist ownership without eagerly loading movies
       const foundUserWatchlist = await this.watchlistRepository.findOne({
@@ -201,7 +213,10 @@ export class WatchlistsService {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
-          message: `Watchlist with id ${id} for the user is not found.`,
+          message: this.i18n.t('messages.watchlists.LIST_NOT_FOUND', {
+            lang,
+            args: { id },
+          }),
         };
       }
 
@@ -232,7 +247,7 @@ export class WatchlistsService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while getting the user watchlist movies.',
+        message: this.i18n.t('messages.watchlists.GET_MOVIES_ERROR', { lang }),
       };
     }
   }
@@ -242,6 +257,7 @@ export class WatchlistsService {
     watchlistId: number,
     movieTmdbId: number,
   ): Promise<GenericResponseType<SuccessResponseType>> {
+    const lang = I18nContext.current()?.lang;
     try {
       // Resolve the movie first (external API) before opening a DB transaction.
       const movieDetailsResponse =
@@ -290,7 +306,9 @@ export class WatchlistsService {
         status: 'success',
         data: {
           success: true,
-          message: 'Movie has been added to the watchlist.',
+          message: this.i18n.t('messages.watchlists.ADD_MOVIE_SUCCESS', {
+            lang,
+          }),
         },
       };
     } catch (err: unknown) {
@@ -299,14 +317,19 @@ export class WatchlistsService {
           return {
             code: HttpStatus.NOT_FOUND,
             status: 'error',
-            message: `Watchlist with id ${watchlistId} for the user is not found.`,
+            message: this.i18n.t('messages.watchlists.LIST_NOT_FOUND', {
+              lang,
+              args: { id: watchlistId },
+            }),
           };
         }
         if (err.message === ErrorTokens.MOVIE_ALREADY_IN_WATCHLIST) {
           return {
             code: HttpStatus.FORBIDDEN,
             status: 'error',
-            message: 'This movie is already in the watchlist for this user.',
+            message: this.i18n.t('messages.watchlists.MOVIE_ALREADY_IN_LIST', {
+              lang,
+            }),
           };
         }
       }
@@ -315,7 +338,7 @@ export class WatchlistsService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while adding the movie to the watchlist.',
+        message: this.i18n.t('messages.watchlists.ADD_MOVIE_ERROR', { lang }),
       };
     }
   }
@@ -325,6 +348,7 @@ export class WatchlistsService {
     watchlistId: number,
     movieTmdbId: number,
   ): Promise<GenericResponseType<SuccessResponseType>> {
+    const lang = I18nContext.current()?.lang;
     try {
       const foundUserWatchlist = await this.watchlistRepository.findOne({
         where: { id: watchlistId, user: { id: userId } },
@@ -333,7 +357,10 @@ export class WatchlistsService {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
-          message: `Watchlist with id ${watchlistId} for the user is not found.`,
+          message: this.i18n.t('messages.watchlists.LIST_NOT_FOUND', {
+            lang,
+            args: { id: watchlistId },
+          }),
         };
       }
 
@@ -346,7 +373,10 @@ export class WatchlistsService {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
-          message: `Movie with id ${movieTmdbId} for the user is not found in this watchlist.`,
+          message: this.i18n.t('messages.watchlists.MOVIE_NOT_IN_LIST', {
+            lang,
+            args: { movieTmdbId },
+          }),
         };
       }
 
@@ -362,7 +392,9 @@ export class WatchlistsService {
         status: 'success',
         data: {
           success: true,
-          message: 'Movie has been deleted from the watchlist successfully.',
+          message: this.i18n.t('messages.watchlists.REMOVE_MOVIE_SUCCESS', {
+            lang,
+          }),
         },
       };
     } catch (error) {
@@ -370,8 +402,9 @@ export class WatchlistsService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message:
-          'An error occurred while deleting the movie from the watchlist.',
+        message: this.i18n.t('messages.watchlists.REMOVE_MOVIE_ERROR', {
+          lang,
+        }),
       };
     }
   }
@@ -381,12 +414,15 @@ export class WatchlistsService {
     watchlistId: number,
     updatedFields: UpdateWatchlistDto,
   ): Promise<GenericResponseType<SuccessResponseType>> {
+    const lang = I18nContext.current()?.lang;
     try {
       if (hasNoUpdateFields(updatedFields)) {
         return {
           code: HttpStatus.BAD_REQUEST,
           status: 'error',
-          message: 'Please provide at least one field to update.',
+          message: this.i18n.t('messages.watchlists.NO_UPDATE_FIELDS', {
+            lang,
+          }),
         };
       }
 
@@ -397,7 +433,10 @@ export class WatchlistsService {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
-          message: `Watchlist with id ${watchlistId} for the user is not found.`,
+          message: this.i18n.t('messages.watchlists.LIST_NOT_FOUND', {
+            lang,
+            args: { id: watchlistId },
+          }),
         };
       }
 
@@ -408,8 +447,7 @@ export class WatchlistsService {
         return {
           code: HttpStatus.FORBIDDEN,
           status: 'error',
-          message:
-            'Please provide a different name to update. The provided name is the same as the current name.',
+          message: this.i18n.t('messages.watchlists.SAME_NAME', { lang }),
         };
       }
 
@@ -419,7 +457,7 @@ export class WatchlistsService {
         status: 'success',
         data: {
           success: true,
-          message: 'Watchlist has been updated successfully.',
+          message: this.i18n.t('messages.watchlists.UPDATE_SUCCESS', { lang }),
         },
       };
     } catch (error) {
@@ -428,14 +466,17 @@ export class WatchlistsService {
         return {
           code: HttpStatus.FORBIDDEN,
           status: 'error',
-          message: `Watchlist with name ${updatedFields.name} for this user already exists`,
+          message: this.i18n.t('messages.watchlists.UPDATE_DUPLICATE', {
+            lang,
+            args: { name: updatedFields.name },
+          }),
         };
       }
       this.logger.error(error);
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while updating the watchlist.',
+        message: this.i18n.t('messages.watchlists.UPDATE_ERROR', { lang }),
       };
     }
   }
@@ -444,6 +485,7 @@ export class WatchlistsService {
     userId: number,
     movieTmdbId: number,
   ): Promise<GenericResponseType<Array<WatchlistWithMovieStatusResponseType>>> {
+    const lang = I18nContext.current()?.lang;
     try {
       const results: Array<WatchlistWithMovieStatusResponseType> =
         await this.watchlistRepository
@@ -468,8 +510,9 @@ export class WatchlistsService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message:
-          'An error occurred while fetching the user watchlists with movie status.',
+        message: this.i18n.t('messages.watchlists.GET_WITH_STATUS_ERROR', {
+          lang,
+        }),
       };
     }
   }
@@ -479,6 +522,7 @@ export class WatchlistsService {
     watchlistId: number,
     movieTmdbId: number,
   ): Promise<GenericResponseType<CheckIsMovieInUserWatchlistResponseType>> {
+    const lang = I18nContext.current()?.lang;
     try {
       const foundUserWatchlist = await this.watchlistRepository.findOne({
         where: { id: watchlistId, user: { id: userId } },
@@ -488,7 +532,10 @@ export class WatchlistsService {
         return {
           code: HttpStatus.NOT_FOUND,
           status: 'error',
-          message: `Watchlist with id ${watchlistId} for the user is not found.`,
+          message: this.i18n.t('messages.watchlists.LIST_NOT_FOUND', {
+            lang,
+            args: { id: watchlistId },
+          }),
         };
       }
 
@@ -509,7 +556,7 @@ export class WatchlistsService {
       return {
         code: HttpStatus.INTERNAL_SERVER_ERROR,
         status: 'error',
-        message: 'An error occurred while checking the movie in the watchlist.',
+        message: this.i18n.t('messages.watchlists.CHECK_MOVIE_ERROR', { lang }),
       };
     }
   }
