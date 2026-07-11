@@ -18,6 +18,7 @@
     "NO_UPDATE_FIELDS": "Please provide at least one field to update.",
     "CANNOT_UPDATE_OTHER_USER": "You are not allowed to update details of other users. Please provide the \"id\" for the current user as the path parameter",
     "SAME_EMAIL": "Please provide a different email to update. The provided email is the same as the current email.",
+    "SAME_NAME": "Please provide a different name to update. The provided name is the same as the current name.",
     "UPDATE_SUCCESS": "User details have been updated successfully.",
     "EMAIL_ALREADY_EXISTS": "A user with this email already exists. Please choose a different email.",
     "UPDATE_ERROR": "An error occurred while updating the user details.",

@@ -18,6 +18,7 @@
     "NO_UPDATE_FIELDS": "Lütfen güncellenecek en az bir alan girin.",
     "CANNOT_UPDATE_OTHER_USER": "Diğer kullanıcıların bilgilerini güncelleyemezsiniz. Lütfen yol parametresi olarak mevcut kullanıcının \"id\" değerini girin",
     "SAME_EMAIL": "Lütfen güncellemek için farklı bir e-posta girin. Girilen e-posta mevcut e-posta ile aynı.",
+    "SAME_NAME": "Lütfen güncellemek için farklı bir isim girin. Girilen isim mevcut isim ile aynı.",
     "UPDATE_SUCCESS": "Kullanıcı bilgileri başarıyla güncellendi.",
     "EMAIL_ALREADY_EXISTS": "Bu e-posta adresiyle kayıtlı bir kullanıcı zaten mevcut. Lütfen farklı bir e-posta seçin.",
     "UPDATE_ERROR": "Kullanıcı bilgileri güncellenirken bir hata oluştu.",

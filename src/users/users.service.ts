@@ -2,7 +2,7 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { hash } from 'bcrypt';
+import { compare, hash } from 'bcrypt';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 import { Repository } from 'typeorm';
 
@@ -76,6 +76,16 @@ export class UsersService {
         };
       }
 
+      if (currentUser.id !== userIdToUpdate) {
+        return {
+          code: HttpStatus.UNAUTHORIZED,
+          status: 'error',
+          message: this.i18n.t('messages.users.CANNOT_UPDATE_OTHER_USER', {
+            lang,
+          }),
+        };
+      }
+
       const foundUser = await this.usersRepository.findOne({
         where: { id: userIdToUpdate },
       });
@@ -87,13 +97,15 @@ export class UsersService {
         };
       }
 
-      if (currentUser.id !== userIdToUpdate) {
+      const doPasswordsMatch = await compare(
+        updatedFields.currentPassword,
+        foundUser.password,
+      );
+      if (!doPasswordsMatch) {
         return {
           code: HttpStatus.UNAUTHORIZED,
           status: 'error',
-          message: this.i18n.t('messages.users.CANNOT_UPDATE_OTHER_USER', {
-            lang,
-          }),
+          message: this.i18n.t('messages.auth.INVALID_CREDENTIALS', { lang }),
         };
       }
 
@@ -108,23 +120,40 @@ export class UsersService {
         };
       }
 
+      if (
+        updatedFields.name?.trim().toLowerCase() ===
+        foundUser.name.trim().toLowerCase()
+      ) {
+        return {
+          code: HttpStatus.FORBIDDEN,
+          status: 'error',
+          message: this.i18n.t('messages.users.SAME_NAME', { lang }),
+        };
+      }
+
       const transformedFields = {
-        ...updatedFields,
+        name: updatedFields.name,
+        email: updatedFields.email,
+        password: updatedFields.newPassword,
       };
 
-      if (updatedFields.password) {
+      if (updatedFields.newPassword) {
         const saltRounds = parseInt(
           this.configService.get('BCRYPT_SALT_ROUNDS', '14'),
           10,
         );
         transformedFields.password = await hash(
-          updatedFields.password,
+          updatedFields.newPassword,
           saltRounds,
         );
       }
 
       if (updatedFields.email) {
         transformedFields.email = updatedFields.email.toLowerCase();
+      }
+
+      if (updatedFields.name) {
+        transformedFields.name = updatedFields.name;
       }
 
       try {
