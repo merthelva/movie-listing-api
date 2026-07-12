@@ -12,7 +12,6 @@ import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { GenericResponseType } from '@/common/types/generic-response.type';
 import { RoleType } from '@/common/types/roles.type';
 import { SuccessResponseType } from '@/common/types/success-response.type';
-import { hasNoUpdateFields } from '@/common/utils/has-no-update-fields.utils';
 import { returnPaginatedData } from '@/common/utils/return-paginated-data.utils';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './entity/user.entity';
@@ -68,7 +67,17 @@ export class UsersService {
   ): Promise<GenericResponseType<SuccessResponseType>> {
     const lang = I18nContext.current()?.lang;
     try {
-      if (hasNoUpdateFields(updatedFields)) {
+      // Note that `UpdateUserDto` has been updated in the previous commit.
+      // Now, `currentPassword` field exists and it is required. So, `hasNoUpdateFields`
+      // means that there is only one field defined in `updatedFields` object
+      // and it is `currentPassword`. There is no need here for `hasNoUpdateFields` utility
+      // function defined in "@/common/utils/has-no-update-fields.utils" anymore.
+      const hasNoUpdateFields =
+        (Object.keys(updatedFields).length === 1 ||
+          Object.values(updatedFields).filter(Boolean).length === 1) &&
+        updatedFields.currentPassword !== undefined;
+
+      if (hasNoUpdateFields) {
         return {
           code: HttpStatus.BAD_REQUEST,
           status: 'error',
