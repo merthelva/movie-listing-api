@@ -30,7 +30,9 @@
     "ONLY_ADMIN_CANNOT_DELETE": "The account cannot be removed because it is the only admin account. Please assign another user as admin before deleting this account.",
     "DELETE_SUCCESS": "User has been deleted successfully.",
     "DELETE_ERROR": "An error occurred while deleting the user.",
-    "GET_USERS_ERROR": "An error occurred while getting the users."
+    "GET_USERS_ERROR": "An error occurred while getting the users.",
+    "CURRENT_PASSWORD_MIN_LENGTH": "Current password has at least 6 characters.",
+    "NEW_PASSWORD_MIN_LENGTH": "New password should have at least 6 characters."
   },
   "movies": {
     "SEARCH_NOT_FOUND": "No results found for query \"{query}\".",
@@ -68,7 +70,8 @@
     "UPDATE_SUCCESS": "Watchlist has been updated successfully.",
     "UPDATE_ERROR": "An error occurred while updating the watchlist.",
     "GET_WITH_STATUS_ERROR": "An error occurred while fetching the user watchlists with movie status.",
-    "CHECK_MOVIE_ERROR": "An error occurred while checking the movie in the watchlist."
+    "CHECK_MOVIE_ERROR": "An error occurred while checking the movie in the watchlist.",
+    "NAME_INVALID_CHARS": "Name contains invalid characters; only letters, numbers, spaces, hyphens and underscores are allowed"
   },
   "favoritelists": {
     "CREATE_DUPLICATE": "Favoritelist with name {name} for this user already exists",
@@ -91,6 +94,7 @@
     "UPDATE_SUCCESS": "Favoritelist has been updated successfully.",
     "UPDATE_ERROR": "An error occurred while updating the favoritelist.",
     "GET_WITH_STATUS_ERROR": "An error occurred while fetching the user favoritelists with movie status.",
-    "CHECK_MOVIE_ERROR": "An error occurred while checking the movie in the favoritelist."
+    "CHECK_MOVIE_ERROR": "An error occurred while checking the movie in the favoritelist.",
+    "NAME_INVALID_CHARS": "Name contains invalid characters; only letters, numbers, spaces, hyphens and underscores are allowed"
   }
 }

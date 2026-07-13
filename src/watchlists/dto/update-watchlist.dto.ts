@@ -1,5 +1,6 @@
 import { IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { i18nValidationMessage } from 'nestjs-i18n';
 
 export class UpdateWatchlistDto {
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
@@ -7,8 +8,7 @@ export class UpdateWatchlistDto {
   @IsNotEmpty()
   @MaxLength(50)
   @Matches(/^[A-Za-z0-9#\.\s_-]+$/, {
-    message:
-      'name contains invalid characters; only letters, numbers, spaces, hyphens and underscores are allowed',
+    message: i18nValidationMessage('messages.watchlists.NAME_INVALID_CHARS'),
   })
   name!: string;
 }

@@ -30,7 +30,9 @@
     "ONLY_ADMIN_CANNOT_DELETE": "Hesap, tek yönetici hesabı olduğu için silinemez. Bu hesabı silmeden önce lütfen başka bir kullanıcıyı yönetici olarak atayın.",
     "DELETE_SUCCESS": "Kullanıcı başarıyla silindi.",
     "DELETE_ERROR": "Kullanıcı silinirken bir hata oluştu.",
-    "GET_USERS_ERROR": "Kullanıcılar alınırken bir hata oluştu."
+    "GET_USERS_ERROR": "Kullanıcılar alınırken bir hata oluştu.",
+    "CURRENT_PASSWORD_MIN_LENGTH": "Mevcut şifre en az 6 karakter olmalıdır.",
+    "NEW_PASSWORD_MIN_LENGTH": "Yeni şifre en az 6 karakter olmalıdır."
   },
   "movies": {
     "SEARCH_NOT_FOUND": "\"{query}\" sorgusu için sonuç bulunamadı.",
@@ -68,7 +70,8 @@
     "UPDATE_SUCCESS": "İzleme listesi başarıyla güncellendi.",
     "UPDATE_ERROR": "İzleme listesi güncellenirken bir hata oluştu.",
     "GET_WITH_STATUS_ERROR": "Kullanıcı izleme listeleri film durumuyla alınırken bir hata oluştu.",
-    "CHECK_MOVIE_ERROR": "İzleme listesindeki film kontrol edilirken bir hata oluştu."
+    "CHECK_MOVIE_ERROR": "İzleme listesindeki film kontrol edilirken bir hata oluştu.",
+    "NAME_INVALID_CHARS": "İsim yalnızca harf, rakam, boşluk, tire ve alt çizgi içerebilir"
   },
   "favoritelists": {
     "CREATE_DUPLICATE": "Bu kullanıcı için {name} adlı favori listesi zaten mevcut",
@@ -91,6 +94,7 @@
     "UPDATE_SUCCESS": "Favori listesi başarıyla güncellendi.",
     "UPDATE_ERROR": "Favori listesi güncellenirken bir hata oluştu.",
     "GET_WITH_STATUS_ERROR": "Kullanıcı favori listeleri film durumuyla alınırken bir hata oluştu.",
-    "CHECK_MOVIE_ERROR": "Favori listesindeki film kontrol edilirken bir hata oluştu."
+    "CHECK_MOVIE_ERROR": "Favori listesindeki film kontrol edilirken bir hata oluştu.",
+    "NAME_INVALID_CHARS": "İsim yalnızca harf, rakam, boşluk, tire ve alt çizgi içerebilir"
   }
 }

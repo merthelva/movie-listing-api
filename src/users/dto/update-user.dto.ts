@@ -5,6 +5,7 @@ import {
   IsString,
   MinLength,
 } from 'class-validator';
+import { i18nValidationMessage } from 'nestjs-i18n';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -18,11 +19,15 @@ export class UpdateUserDto {
   email?: string;
 
   @IsString()
-  @MinLength(6, { message: 'Current password has at least 6 characters.' })
+  @MinLength(6, {
+    message: i18nValidationMessage('messages.users.CURRENT_PASSWORD_MIN_LENGTH'),
+  })
   currentPassword!: string;
 
   @IsOptional()
   @IsString()
-  @MinLength(6, { message: 'New password should have at least 6 characters.' })
+  @MinLength(6, {
+    message: i18nValidationMessage('messages.users.NEW_PASSWORD_MIN_LENGTH'),
+  })
   newPassword?: string;
 }
