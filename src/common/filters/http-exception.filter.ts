@@ -5,8 +5,10 @@ import {
   HttpException,
 } from '@nestjs/common';
 
+import { I18nValidationException } from 'nestjs-i18n';
 import { Response } from 'express';
 
+import { flattenValidationErrors } from '@/common/utils/flatten-validation-errors.utils';
 import { serializeErrorMessage } from '@/common/utils/serialize-error-message.utils';
 import { GenericResponseType } from '@/common/types/generic-response.type';
 
@@ -26,7 +28,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const exceptionResponse = exception.getResponse();
 
     let message = 'An internal server error occurred. Please try again later.';
-    if (typeof exceptionResponse === 'string') {
+    if (exception instanceof I18nValidationException) {
+      message = serializeErrorMessage(
+        flattenValidationErrors(exception.errors),
+      );
+    } else if (typeof exceptionResponse === 'string') {
       message = exceptionResponse;
     } else if (
       typeof exceptionResponse === 'object' &&
