@@ -85,7 +85,7 @@ describe('MoviesService', () => {
       if (result.status === 'success') {
         expect(result.data.page).toBe(1);
       }
-      expect(service['cache'].get).toHaveBeenCalledWith('search:test:1');
+      expect(service['cache'].get).toHaveBeenCalledWith('search:test:1:en-US');
     });
 
     it('should use default page value of 1', async () => {
@@ -166,7 +166,7 @@ describe('MoviesService', () => {
       if (result.status === 'success') {
         expect(result.data.title).toBe('Cached Movie');
       }
-      expect(service['cache'].get).toHaveBeenCalledWith('movie:123');
+      expect(service['cache'].get).toHaveBeenCalledWith('movie:123:en-US');
     });
 
     it('should return error for invalid tmdbId', async () => {
@@ -242,7 +242,7 @@ describe('MoviesService', () => {
       if (result.status === 'success') {
         expect(result.data[0].name).toBe('Actor');
       }
-      expect(service['cache'].get).toHaveBeenCalledWith('movie-cast:123');
+      expect(service['cache'].get).toHaveBeenCalledWith('movie-cast:123:en-US');
     });
 
     it('should return error for invalid tmdbId', async () => {
@@ -305,7 +305,9 @@ describe('MoviesService', () => {
       if (result.status === 'success' && result.data) {
         expect(result.data.key).toBe('dQw4w9WgXcQ');
       }
-      expect(service['cache'].get).toHaveBeenCalledWith('movie-trailer:123');
+      expect(service['cache'].get).toHaveBeenCalledWith(
+        'movie-trailer:123:en-US',
+      );
     });
 
     it('should return null trailer if no YouTube trailer found', async () => {
@@ -389,7 +391,7 @@ describe('MoviesService', () => {
       if (result.status === 'success') {
         expect(result.data.results[0].title).toBe('Popular Movie');
       }
-      expect(service['cache'].get).toHaveBeenCalledWith('popular:1');
+      expect(service['cache'].get).toHaveBeenCalledWith('popular:1:en-US');
     });
 
     it('should use default page value of 1', async () => {
@@ -406,7 +408,7 @@ describe('MoviesService', () => {
 
       await service.getMoviesByCategory('upcoming');
 
-      expect(service['cache'].get).toHaveBeenCalledWith('upcoming:1');
+      expect(service['cache'].get).toHaveBeenCalledWith('upcoming:1:en-US');
     });
 
     it('should handle API errors gracefully', async () => {

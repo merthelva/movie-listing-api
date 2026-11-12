@@ -7,6 +7,9 @@ import { UserEntity } from './entity/user.entity';
 import { UserCacheService } from './user-cache.service';
 import { HttpStatus } from '@nestjs/common';
 import * as enMessages from '@/i18n/en-US/messages.json';
+import { compare, hash } from 'bcrypt';
+
+jest.mock('bcrypt');
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -118,8 +121,15 @@ describe('UsersService', () => {
   });
 
   describe('updateUserDetails', () => {
+    const currentPassword = 'currentpass';
+
+    beforeEach(() => {
+      (compare as jest.Mock).mockResolvedValue(true);
+      (hash as jest.Mock).mockResolvedValue('newhashedpassword');
+    });
+
     it('should update user details successfully', async () => {
-      const updateDto = { name: 'Updated Name' };
+      const updateDto = { name: 'Updated Name', currentPassword };
       mockRepository.findOne.mockResolvedValue(mockUserEntity);
       mockRepository.update.mockResolvedValue({ affected: 1 });
 
@@ -134,7 +144,7 @@ describe('UsersService', () => {
     });
 
     it('should return error when no fields to update', async () => {
-      const updateDto = {};
+      const updateDto = { currentPassword };
 
       const result = await service.updateUserDetails(
         1,
@@ -150,7 +160,7 @@ describe('UsersService', () => {
     });
 
     it('should prevent user from updating other users', async () => {
-      const updateDto = { name: 'Hacker Name' };
+      const updateDto = { name: 'Hacker Name', currentPassword };
       const otherUser = { ...mockUserEntity, id: 2 };
       mockRepository.findOne.mockResolvedValue(otherUser);
 
@@ -167,11 +177,11 @@ describe('UsersService', () => {
     });
 
     it('should return error when user not found', async () => {
-      const updateDto = { name: 'New Name' };
+      const updateDto = { name: 'New Name', currentPassword };
       mockRepository.findOne.mockResolvedValue(null);
 
       const result = await service.updateUserDetails(
-        999,
+        1,
         mockUserEntity,
         updateDto,
       );
@@ -182,8 +192,26 @@ describe('UsersService', () => {
       }
     });
 
-    it('should hash password if provided', async () => {
-      const updateDto = { password: 'newpassword' };
+    it('should return 401 when current password is wrong', async () => {
+      (compare as jest.Mock).mockResolvedValue(false);
+      const updateDto = { name: 'New Name', currentPassword: 'wrongpass' };
+      mockRepository.findOne.mockResolvedValue(mockUserEntity);
+
+      const result = await service.updateUserDetails(
+        1,
+        mockUserEntity,
+        updateDto,
+      );
+
+      expect(result.status).toBe('error');
+      if (result.status === 'error') {
+        expect(result.code).toBe(HttpStatus.UNAUTHORIZED);
+      }
+      expect(mockRepository.update).not.toHaveBeenCalled();
+    });
+
+    it('should hash new password if provided', async () => {
+      const updateDto = { newPassword: 'newpassword', currentPassword };
       mockRepository.findOne.mockResolvedValue(mockUserEntity);
       mockRepository.update.mockResolvedValue({ affected: 1 });
 
@@ -194,11 +222,15 @@ describe('UsersService', () => {
       );
 
       expect(result.status).toBe('success');
-      expect(mockRepository.update).toHaveBeenCalled();
+      expect(hash).toHaveBeenCalledWith('newpassword', 14);
+      expect(mockRepository.update).toHaveBeenCalledWith(
+        { id: 1 },
+        expect.objectContaining({ password: 'newhashedpassword' }),
+      );
     });
 
     it('should handle duplicate email error', async () => {
-      const updateDto = { email: 'duplicate@example.com' };
+      const updateDto = { email: 'duplicate@example.com', currentPassword };
       mockRepository.findOne.mockResolvedValue(mockUserEntity);
       mockRepository.update.mockRejectedValue({ code: '23505' }); // PG unique violation
 
