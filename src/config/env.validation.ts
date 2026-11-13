@@ -24,6 +24,9 @@ export const envValidationSchema = Joi.object({
   // ============== APPLICATION ==============
   NODE_ENV: Joi.string().valid('development', 'production').required(),
   PORT: Joi.number().default(3000),
+  // Must stay above the TMDB retry budget (attempts x fetch timeout + waits):
+  // with 3 retries and a 10 s fetch timeout the worst case is ~55 s.
+  REQUEST_TIMEOUT_MS: Joi.number().integer().min(1).default(60_000),
   // ============== JWT ==============
   JWT_SECRET: Joi.string().min(32).required(),
   JWT_EXPIRES_IN: Joi.string().required(),

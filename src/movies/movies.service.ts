@@ -12,6 +12,7 @@ import { delayInMs } from '@/common/utils/delay-ms.utils';
 import { GenericResponseType } from '@/common/types/generic-response.type';
 import { TtlCache } from '@/common/utils/ttl-cache.utils';
 import { maxCacheSize } from './constants/max-cache-size.constant';
+import { maxRetryDelayMs } from './constants/max-retry-delay.constant';
 import type {
   MovieCastResponseType,
   MovieDetailsType,
@@ -445,6 +446,18 @@ export class MoviesService implements OnModuleDestroy {
     return value != null ? +value.toFixed(1) : 0;
   }
 
+  /**
+   * `Retry-After` is either whole seconds or an HTTP date. Only whole,
+   * non-negative seconds are honoured; anything else returns null so the
+   * caller falls back to exponential backoff.
+   */
+  private parseRetryAfterMs(header: string | null): number | null {
+    if (header === null || !/^\d+$/.test(header.trim())) {
+      return null;
+    }
+    return parseInt(header, 10) * 1000;
+  }
+
   private async fetchWithRetry(url: string) {
     let lastErr = new Error('All retry attempts are failed');
     for (let attempt = 0; attempt <= this.retryAttempts; attempt++) {
@@ -470,16 +483,23 @@ export class MoviesService implements OnModuleDestroy {
           this.logger.warn(
             `TMDB responded ${response.status}. Retry attempt ${attempt + 1}/${this.retryAttempts}`,
           );
-          const retryAfter = response.headers.get('Retry-After');
-          const delayMs = retryAfter
-            ? parseInt(retryAfter, 10) * 1000
-            : Math.pow(2, attempt) * 1000;
-          await delayInMs(delayMs);
+          const requestedMs = this.parseRetryAfterMs(
+            response.headers.get('Retry-After'),
+          );
+          // Never wait longer than maxRetryDelayMs, whatever TMDB asks for
+          const delayMs =
+            requestedMs !== null
+              ? Math.min(requestedMs, maxRetryDelayMs)
+              : Math.pow(2, attempt) * 1000;
           lastErr = new Error(
             response.status === 429
-              ? `Server receives too many requests. Please try again in ${delayMs / 1000} seconds.`
+              ? `Server receives too many requests. Please try again in ${(requestedMs ?? delayMs) / 1000} seconds.`
               : 'An error occurred while fetching movies from TMDB.',
           );
+          // No point sleeping after the final attempt: we throw right away
+          if (attempt < this.retryAttempts) {
+            await delayInMs(delayMs);
+          }
           continue;
         }
 

@@ -2,12 +2,18 @@ import { join } from 'path';
 
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AcceptLanguageResolver, I18nModule } from 'nestjs-i18n';
+import {
+  AcceptLanguageResolver,
+  I18nModule,
+  I18nValidationPipe,
+} from 'nestjs-i18n';
 
 import { SeedModule } from '@/seed/seed.module';
+import { HttpExceptionFilter } from '@/common/filters/http-exception.filter';
+import { TimeoutInterceptor } from '@/common/interceptors/timeout.interceptor';
 import { envValidationSchema } from '@/config/env.validation';
 import { buildThrottlerOptions } from '@/config/throttler.config';
 import { AuthModule } from '@auth/auth.module';
@@ -79,6 +85,28 @@ import { InitialSchema1779552504166 } from './database/migrations/1779552504166-
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    // Registered here (not in main.ts) so e2e tests that boot AppModule get
+    // exactly the same filter, pipe and interceptor as production.
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
+    },
+    {
+      provide: APP_PIPE,
+      useValue: new I18nValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) =>
+        new TimeoutInterceptor(
+          configService.getOrThrow<number>('REQUEST_TIMEOUT_MS'),
+        ),
     },
   ],
 })
