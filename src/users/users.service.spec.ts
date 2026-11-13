@@ -25,7 +25,7 @@ describe('UsersService', () => {
   };
 
   const mockConfigService = {
-    get: jest.fn().mockReturnValue('14'),
+    getOrThrow: jest.fn().mockReturnValue(14),
   };
 
   const mockUserCacheService = {

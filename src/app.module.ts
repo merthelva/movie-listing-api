@@ -17,17 +17,14 @@ import { TimeoutInterceptor } from '@/common/interceptors/timeout.interceptor';
 import { envValidationSchema } from '@/config/env.validation';
 import { buildThrottlerOptions } from '@/config/throttler.config';
 import { AuthModule } from '@auth/auth.module';
-import { FavoritelistEntity } from '@favoritelists/entity/favoritelist.entity';
 import { FavoritelistsModule } from '@favoritelists/favoritelists.module';
 import { HealthModule } from '@health/health.module';
-import { MovieEntity } from '@movies/entity/movie.entity';
 import { MoviesModule } from '@movies/movies.module';
-import { UserEntity } from '@users/entity/user.entity';
 import { UsersModule } from '@users/users.module';
-import { WatchlistEntity } from '@watchlists/entity/watchlist.entity';
 import { WatchlistsModule } from '@watchlists/watchlists.module';
 
-import { InitialSchema1779552504166 } from './database/migrations/1779552504166-InitialSchema';
+import { DB_ENTITIES } from './database/constants/db-entities.constant';
+import { DB_MIGRATIONS } from './database/constants/db-migrations.constant';
 
 @Module({
   imports: [
@@ -53,23 +50,17 @@ import { InitialSchema1779552504166 } from './database/migrations/1779552504166-
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         type: 'postgres',
-        host: configService.get<string>('DB_HOST', 'localhost'),
-        port: configService.get<number>('DB_PORT', 5432),
-        username: configService.get<string>('DB_USERNAME', 'postgres'),
-        password: configService.get<string>('DB_PASSWORD', 'password'),
-        database: configService.get<string>(
-          'DB_NAME',
-          'user_movie_list_db_dev',
-        ),
-        entities: [
-          UserEntity,
-          WatchlistEntity,
-          MovieEntity,
-          FavoritelistEntity,
-        ],
-        migrations: [InitialSchema1779552504166],
+        // DB_* are required by the env schema (Joi); no hidden fallbacks.
+        host: configService.getOrThrow<string>('DB_HOST'),
+        port: configService.getOrThrow<number>('DB_PORT'),
+        username: configService.getOrThrow<string>('DB_USERNAME'),
+        password: configService.getOrThrow<string>('DB_PASSWORD'),
+        database: configService.getOrThrow<string>('DB_NAME'),
+        entities: DB_ENTITIES,
+        migrations: DB_MIGRATIONS,
         migrationsRun: true,
-        synchronize: process.env.NODE_ENV !== 'production',
+        // Schema is owned by migrations in every environment.
+        synchronize: false,
         logging: process.env.NODE_ENV !== 'production',
       }),
     }),

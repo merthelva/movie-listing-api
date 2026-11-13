@@ -2,10 +2,8 @@ import * as dotenv from 'dotenv';
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 
-import { FavoritelistEntity } from '@favoritelists/entity/favoritelist.entity';
-import { MovieEntity } from '@movies/entity/movie.entity';
-import { UserEntity } from '@users/entity/user.entity';
-import { WatchlistEntity } from '@watchlists/entity/watchlist.entity';
+import { DB_ENTITIES } from './constants/db-entities.constant';
+import { DB_MIGRATIONS } from './constants/db-migrations.constant';
 
 // Load environment-specific .env file. Defaults to 'development' if NODE_ENV not set.
 // For production migrations, explicitly set: NODE_ENV=production pnpm migration:run
@@ -20,7 +18,7 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  entities: [UserEntity, MovieEntity, WatchlistEntity, FavoritelistEntity],
-  migrations: ['src/database/migrations/*.ts'],
+  entities: DB_ENTITIES,
+  migrations: DB_MIGRATIONS,
   synchronize: false,
 });

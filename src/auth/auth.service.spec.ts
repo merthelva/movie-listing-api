@@ -33,7 +33,7 @@ describe('AuthService', () => {
   };
 
   const mockConfigService = {
-    get: jest.fn(),
+    getOrThrow: jest.fn(),
   };
 
   const mockUserCacheService = {
@@ -99,7 +99,7 @@ describe('AuthService', () => {
       } as UserEntity;
 
       mockRepository.findOne.mockResolvedValue(null);
-      mockConfigService.get.mockReturnValue('14');
+      mockConfigService.getOrThrow.mockReturnValue(14);
       mockRepository.create.mockReturnValue(createdUser);
       mockRepository.save.mockResolvedValue(createdUser);
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword');
