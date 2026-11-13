@@ -25,7 +25,7 @@ export class WatchlistEntity {
   })
   user!: UserEntity;
 
-  @ManyToMany(() => MovieEntity)
+  @ManyToMany(() => MovieEntity, (movie) => movie.watchlists)
   @JoinTable({
     name: 'watchlist_movies',
     joinColumn: {

@@ -25,7 +25,7 @@ export class FavoritelistEntity {
   })
   user!: UserEntity;
 
-  @ManyToMany(() => MovieEntity)
+  @ManyToMany(() => MovieEntity, (movie) => movie.favoritelists)
   @JoinTable({
     name: 'favoritelist_movies',
     joinColumn: {
