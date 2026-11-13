@@ -1,4 +1,7 @@
 {
+  "common": {
+    "INTERNAL_SERVER_ERROR": "Dahili bir sunucu hatası oluştu. Lütfen daha sonra tekrar deneyin."
+  },
   "auth": {
     "USER_ALREADY_EXISTS": "Bu e-posta adresiyle kayıtlı bir kullanıcı zaten mevcut",
     "REGISTER_ERROR": "Kullanıcı kaydedilirken bir hata oluştu.",

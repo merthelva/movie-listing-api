@@ -1,4 +1,7 @@
 {
+  "common": {
+    "INTERNAL_SERVER_ERROR": "An internal server error occurred. Please try again later."
+  },
   "auth": {
     "USER_ALREADY_EXISTS": "User with this email already exists",
     "REGISTER_ERROR": "An error occurred while registering the user.",

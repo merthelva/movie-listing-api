@@ -3,21 +3,50 @@ import {
   Catch,
   ArgumentsHost,
   HttpException,
+  HttpStatus,
+  Logger,
 } from '@nestjs/common';
 
-import { I18nValidationException } from 'nestjs-i18n';
+import { I18nContext, I18nValidationException } from 'nestjs-i18n';
 import { Response } from 'express';
 
 import { flattenValidationErrors } from '@/common/utils/flatten-validation-errors.utils';
 import { serializeErrorMessage } from '@/common/utils/serialize-error-message.utils';
 import { GenericResponseType } from '@/common/types/generic-response.type';
 
-@Catch(HttpException)
+const GENERIC_ERROR_I18N_KEY = 'messages.common.INTERNAL_SERVER_ERROR';
+// Last resort when no i18n context exists for the request (e.g. the error
+// happened before the language resolver ran).
+const GENERIC_ERROR_FALLBACK =
+  'An internal server error occurred. Please try again later.';
+
+@Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
-  catch(exception: HttpException, host: ArgumentsHost): void {
+  private readonly logger = new Logger(HttpExceptionFilter.name);
+
+  catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     // Get the response object from the underlying Express platform
     const response = ctx.getResponse<Response>();
+    const genericMessage =
+      I18nContext.current(host)?.t(GENERIC_ERROR_I18N_KEY) ??
+      GENERIC_ERROR_FALLBACK;
+
+    // Non-HTTP errors (TypeError, DB driver errors, ...) are unexpected:
+    // log the real cause, but give the client only the generic 500 envelope.
+    if (!(exception instanceof HttpException)) {
+      this.logger.error(
+        exception instanceof Error ? exception.message : String(exception),
+        exception instanceof Error ? exception.stack : undefined,
+      );
+      const body: Extract<GenericResponseType, { status: 'error' }> = {
+        status: 'error',
+        code: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: genericMessage,
+      };
+      response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(body);
+      return;
+    }
 
     // Extract the HTTP status code from the exception
     const status = exception.getStatus();
@@ -27,7 +56,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     // (e.g., validation errors contain an array/object)
     const exceptionResponse = exception.getResponse();
 
-    let message = 'An internal server error occurred. Please try again later.';
+    let message = genericMessage;
     if (exception instanceof I18nValidationException) {
       message = serializeErrorMessage(
         flattenValidationErrors(exception.errors),
