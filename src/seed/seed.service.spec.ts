@@ -1,13 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { compare } from 'bcrypt';
+
 import { SeedService } from './seed.service';
 import { UserEntity } from '@users/entity/user.entity';
 import { Roles } from '@/common/constants/roles.constant';
+import { PgViolationCodes } from '@/common/constants/pg-violation-codes.constant';
 
 describe('SeedService', () => {
   let service: SeedService;
-  let configService: ConfigService;
 
   const mockRepository = {
     findOne: jest.fn(),
@@ -15,149 +17,138 @@ describe('SeedService', () => {
     save: jest.fn(),
   };
 
+  // Mirrors ConfigService.getOrThrow: unknown keys throw
+  let configValues: Record<string, unknown>;
   const mockConfigService = {
-    get: jest.fn(),
+    getOrThrow: jest.fn((key: string) => {
+      if (!(key in configValues)) {
+        throw new Error(`Configuration key "${key}" does not exist`);
+      }
+      return configValues[key];
+    }),
   };
 
+  const validConfig = {
+    ADMIN_EMAIL: 'admin@example.com',
+    ADMIN_PASSWORD: 'password123',
+    ADMIN_NAME: 'Admin',
+    BCRYPT_SALT_ROUNDS: 10, // Joi enforces min 10; keeps bcrypt fast in tests
+  };
+
+  const uniqueViolation = Object.assign(new Error('duplicate key'), {
+    code: PgViolationCodes.UNIQUE_VIOLATION,
+  });
+
   beforeEach(async () => {
+    configValues = { ...validConfig };
+    mockRepository.create.mockImplementation((entity: object) => entity);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SeedService,
-        {
-          provide: getRepositoryToken(UserEntity),
-          useValue: mockRepository,
-        },
-        {
-          provide: ConfigService,
-          useValue: mockConfigService,
-        },
+        { provide: getRepositoryToken(UserEntity), useValue: mockRepository },
+        { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
 
     service = module.get<SeedService>(SeedService);
-    configService = module.get<ConfigService>(ConfigService);
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
+    // resetAllMocks also drops the getOrThrow implementation: restore it
+    mockConfigService.getOrThrow.mockImplementation((key: string) => {
+      if (!(key in configValues)) {
+        throw new Error(`Configuration key "${key}" does not exist`);
+      }
+      return configValues[key];
+    });
   });
 
   describe('onApplicationBootstrap', () => {
-    it('should skip seeding if admin already exists', async () => {
-      const existingAdmin = { id: 1, email: 'admin@test.com', role: Roles.ADMIN };
-      mockRepository.findOne.mockResolvedValue(existingAdmin);
-
-      await service.onApplicationBootstrap();
-
-      expect(mockRepository.findOne).toHaveBeenCalledWith({
-        where: { role: Roles.ADMIN },
-      });
-      expect(mockRepository.create).not.toHaveBeenCalled();
-      expect(mockRepository.save).not.toHaveBeenCalled();
-    });
-
-    it('should skip seeding if admin credentials are not configured', async () => {
-      mockRepository.findOne.mockResolvedValue(null);
-      mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'ADMIN_EMAIL') return undefined;
-        if (key === 'ADMIN_PASSWORD') return undefined;
-        return null;
-      });
-
-      await service.onApplicationBootstrap();
-
-      expect(mockRepository.create).not.toHaveBeenCalled();
-      expect(mockRepository.save).not.toHaveBeenCalled();
-    });
-
-    it('should create and save admin user when no admin exists and credentials are provided', async () => {
-      mockRepository.findOne.mockResolvedValue(null);
-      mockConfigService.get.mockImplementation((key: string, defaultVal?: string) => {
-        if (key === 'ADMIN_EMAIL') return 'admin@example.com';
-        if (key === 'ADMIN_PASSWORD') return 'password123';
-        if (key === 'ADMIN_NAME') return 'Admin';
-        if (key === 'BCRYPT_SALT_ROUNDS') return '14';
-        return defaultVal || null;
-      });
-
-      const createdAdmin = {
-        name: 'Admin',
-        email: 'admin@example.com',
-        password: 'hashed_password',
+    it('skips seeding if an admin already exists', async () => {
+      mockRepository.findOne.mockResolvedValue({
+        id: 1,
+        email: 'admin@test.com',
         role: Roles.ADMIN,
-      };
-      mockRepository.create.mockReturnValue(createdAdmin);
+      });
 
       await service.onApplicationBootstrap();
 
       expect(mockRepository.findOne).toHaveBeenCalledWith({
         where: { role: Roles.ADMIN },
       });
+      expect(mockRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('creates and saves a hashed admin when none exists', async () => {
+      mockRepository.findOne.mockResolvedValue(null);
+
+      await service.onApplicationBootstrap();
+
       expect(mockRepository.create).toHaveBeenCalledWith({
         name: 'Admin',
         email: 'admin@example.com',
-        password: expect.any(String),
+        password: expect.any(String) as string,
         role: Roles.ADMIN,
       });
-      expect(mockRepository.save).toHaveBeenCalledWith(createdAdmin);
+      const [saved] = mockRepository.save.mock.calls[0] as [
+        { password: string },
+      ];
+      expect(saved.password).not.toBe('password123');
+      await expect(compare('password123', saved.password)).resolves.toBe(true);
     });
 
-    it('should use default admin name when not configured', async () => {
+    it('lowercases the admin email before saving', async () => {
+      configValues.ADMIN_EMAIL = 'ADMIN@EXAMPLE.COM';
       mockRepository.findOne.mockResolvedValue(null);
-      mockConfigService.get.mockImplementation((key: string, defaultVal?: string) => {
-        if (key === 'ADMIN_EMAIL') return 'admin@example.com';
-        if (key === 'ADMIN_PASSWORD') return 'password123';
-        if (key === 'ADMIN_NAME') return 'Admin';
-        if (key === 'BCRYPT_SALT_ROUNDS') return '14';
-        return defaultVal || null;
-      });
-
-      const createdAdmin = {
-        name: 'Admin',
-        email: 'admin@example.com',
-        password: 'hashed_password',
-        role: Roles.ADMIN,
-      };
-      mockRepository.create.mockReturnValue(createdAdmin);
 
       await service.onApplicationBootstrap();
 
       expect(mockRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          name: 'Admin',
-        }),
+        expect.objectContaining({ email: 'admin@example.com' }),
       );
     });
 
-    it('should convert email to lowercase before saving', async () => {
+    it('fails loudly (no silent skip) when required admin config is missing', async () => {
+      delete configValues.ADMIN_PASSWORD;
       mockRepository.findOne.mockResolvedValue(null);
-      mockConfigService.get.mockImplementation((key: string, defaultVal?: string) => {
-        if (key === 'ADMIN_EMAIL') return 'ADMIN@EXAMPLE.COM';
-        if (key === 'ADMIN_PASSWORD') return 'password123';
-        if (key === 'ADMIN_NAME') return 'Admin';
-        if (key === 'BCRYPT_SALT_ROUNDS') return '14';
-        return defaultVal || null;
-      });
 
-      const createdAdmin = {
-        name: 'Admin',
-        email: 'admin@example.com',
-        password: 'hashed_password',
-        role: Roles.ADMIN,
-      };
-      mockRepository.create.mockReturnValue(createdAdmin);
+      await expect(service.onApplicationBootstrap()).rejects.toThrow(
+        'ADMIN_PASSWORD',
+      );
+      expect(mockRepository.save).not.toHaveBeenCalled();
+    });
 
-      await service.onApplicationBootstrap();
+    it('treats a unique violation as success when another instance already seeded the admin', async () => {
+      mockRepository.findOne
+        .mockResolvedValueOnce(null) // initial exists-check
+        .mockResolvedValueOnce({ id: 1, role: Roles.ADMIN }); // re-check after race
+      mockRepository.save.mockRejectedValue(uniqueViolation);
 
-      expect(mockRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          email: 'admin@example.com',
-        }),
+      await expect(service.onApplicationBootstrap()).resolves.toBeUndefined();
+
+      expect(mockRepository.findOne).toHaveBeenCalledTimes(2);
+    });
+
+    it('rethrows a unique violation when still no admin exists (e.g. ADMIN_EMAIL taken by a normal user)', async () => {
+      mockRepository.findOne.mockResolvedValue(null);
+      mockRepository.save.mockRejectedValue(uniqueViolation);
+
+      await expect(service.onApplicationBootstrap()).rejects.toBe(
+        uniqueViolation,
       );
     });
-  });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+    it('rethrows any other database error', async () => {
+      const dbDown = Object.assign(new Error('connection lost'), {
+        code: '08006',
+      });
+      mockRepository.findOne.mockResolvedValue(null);
+      mockRepository.save.mockRejectedValue(dbDown);
+
+      await expect(service.onApplicationBootstrap()).rejects.toBe(dbDown);
+      expect(mockRepository.findOne).toHaveBeenCalledTimes(1);
+    });
   });
 });
