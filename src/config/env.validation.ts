@@ -28,6 +28,11 @@ export const envValidationSchema = Joi.object({
   JWT_SECRET: Joi.string().min(32).required(),
   JWT_EXPIRES_IN: Joi.string().required(),
   BCRYPT_SALT_ROUNDS: Joi.number().min(10).required(),
+  // ============== RATE LIMITING ==============
+  THROTTLE_LIMIT: Joi.number().integer().min(1).default(60),
+  THROTTLE_TTL_MS: Joi.number().integer().min(1).default(60_000),
+  AUTH_THROTTLE_LIMIT: Joi.number().integer().min(1).default(10),
+  AUTH_THROTTLE_TTL_MS: Joi.number().integer().min(1).default(60_000),
   // ============== CORS ==============
   CORS_ORIGIN: Joi.string().required(),
 });

@@ -9,6 +9,7 @@ import { AcceptLanguageResolver, I18nModule } from 'nestjs-i18n';
 
 import { SeedModule } from '@/seed/seed.module';
 import { envValidationSchema } from '@/config/env.validation';
+import { buildThrottlerOptions } from '@/config/throttler.config';
 import { AuthModule } from '@auth/auth.module';
 import { FavoritelistEntity } from '@favoritelists/entity/favoritelist.entity';
 import { FavoritelistsModule } from '@favoritelists/favoritelists.module';
@@ -24,7 +25,10 @@ import { InitialSchema1779552504166 } from './database/migrations/1779552504166-
 
 @Module({
   imports: [
-    ThrottlerModule.forRoot([{ limit: 60, ttl: 60_000 }]),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: buildThrottlerOptions,
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV}`,

@@ -1,10 +1,13 @@
 import { Controller, Get } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import {
   HealthCheck,
   HealthCheckService,
   TypeOrmHealthIndicator,
 } from '@nestjs/terminus';
 
+// Liveness/readiness probes must never be rate limited
+@SkipThrottle()
 @Controller('health')
 export class HealthController {
   constructor(
