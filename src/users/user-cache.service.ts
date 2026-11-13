@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { TtlCache } from '@/common/utils/ttl-cache.utils';
 import { CachedUserType } from '@/auth/types';
 import {
@@ -7,14 +7,20 @@ import {
 } from '@/auth/constants/user-cache.constant';
 
 @Injectable()
-export class UserCacheService {
+export class UserCacheService implements OnModuleDestroy {
   private readonly cache = new TtlCache<number, CachedUserType>(
     userCacheTtlMs,
     maxUserCacheSize,
   );
 
+  private readonly sweeper: NodeJS.Timeout;
+
   constructor() {
-    setInterval(() => this.cache.evictExpired(), userCacheTtlMs);
+    this.sweeper = setInterval(() => this.cache.evictExpired(), userCacheTtlMs);
+  }
+
+  onModuleDestroy(): void {
+    clearInterval(this.sweeper);
   }
 
   get(userId: number): CachedUserType | null {

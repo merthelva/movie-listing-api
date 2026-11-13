@@ -1,4 +1,9 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import {
+  HttpStatus,
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { I18nContext, I18nService } from 'nestjs-i18n';
@@ -21,12 +26,13 @@ import type {
 import { LocaleType } from '@/common/types/locale.type';
 
 @Injectable()
-export class MoviesService {
+export class MoviesService implements OnModuleDestroy {
   private readonly readAccessToken: string;
   private readonly baseUrl: string;
   private readonly cacheTtlMs: number;
   private readonly retryAttempts: number;
   private readonly fetchTimeoutMs: number;
+  private readonly sweeper: NodeJS.Timeout;
   private readonly cache: TtlCache<
     string,
     | SearchMovieResultType
@@ -61,7 +67,14 @@ export class MoviesService {
       10000,
     );
     this.cache = new TtlCache(this.cacheTtlMs, maxCacheSize);
-    setInterval(() => this.cache.evictExpired(), this.cacheTtlMs);
+    this.sweeper = setInterval(
+      () => this.cache.evictExpired(),
+      this.cacheTtlMs,
+    );
+  }
+
+  onModuleDestroy(): void {
+    clearInterval(this.sweeper);
   }
 
   async searchMovies(

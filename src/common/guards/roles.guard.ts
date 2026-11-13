@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
-import { ROLES_KEY } from '@/common/decorators/roles.decorator';
+import { ROLES_KEY } from '@/common/constants/roles-key.constant';
 import { AuthUser } from '@/common/types/auth-user.type';
 import { RoleType } from '@/common/types/roles.type';
 

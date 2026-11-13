@@ -54,7 +54,28 @@ describe('MoviesService', () => {
   });
 
   afterEach(() => {
+    // Stop the cache sweeper so Jest workers can exit cleanly
+    service.onModuleDestroy();
     jest.clearAllMocks();
+  });
+
+  describe('onModuleDestroy', () => {
+    it('clears the cache sweeper timer', () => {
+      jest.useFakeTimers();
+      try {
+        const fresh = new MoviesService(
+          mockConfigService as unknown as ConfigService,
+          mockI18nService as unknown as I18nService,
+        );
+        expect(jest.getTimerCount()).toBe(1);
+
+        fresh.onModuleDestroy();
+
+        expect(jest.getTimerCount()).toBe(0);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
   });
 
   describe('searchMovies', () => {
