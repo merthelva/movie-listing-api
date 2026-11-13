@@ -3,29 +3,33 @@ import {
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
+import { ROLES_KEY } from '@/common/decorators/roles.decorator';
+import { AuthUser } from '@/common/types/auth-user.type';
 import { RoleType } from '@/common/types/roles.type';
-import { UserEntity } from '@/users/entity/user.entity';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.get<Array<RoleType>>(
-      'user-roles',
+    const requiredRoles = this.reflector.getAllAndOverride<
+      Array<RoleType> | undefined
+    >(ROLES_KEY, [
+      // Handler-level @Roles() wins over class-level @Roles()
       context.getHandler(),
-    );
+      context.getClass(),
+    ]);
 
     // If no @Roles() decorator is present, skip the guard
     if (!requiredRoles) {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
-    const user: UserEntity | undefined = request.user;
+    const { user } = context.switchToHttp().getRequest<{ user?: AuthUser }>();
 
     // Defensive check: user should be present if JwtGuard is applied first
     if (!user) {
@@ -39,7 +43,8 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    throw new UnauthorizedException(
+    // Authenticated but not allowed: 403, not 401
+    throw new ForbiddenException(
       'You do not have the required role to access this resource',
     );
   }
