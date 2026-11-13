@@ -35,7 +35,16 @@
     "DELETE_ERROR": "Kullanıcı silinirken bir hata oluştu.",
     "GET_USERS_ERROR": "Kullanıcılar alınırken bir hata oluştu.",
     "CURRENT_PASSWORD_MIN_LENGTH": "Mevcut şifre en az 6 karakter olmalıdır.",
-    "NEW_PASSWORD_MIN_LENGTH": "Yeni şifre en az 6 karakter olmalıdır."
+    "NEW_PASSWORD_MIN_LENGTH": "Yeni şifre en az 6 karakter olmalıdır.",
+    "EMAIL_REQUIRED": "E-posta adresi zorunludur.",
+    "EMAIL_NOT_EMPTY": "E-posta adresi boş olamaz.",
+    "EMAIL_INVALID": "Lütfen geçerli bir e-posta adresi girin.",
+    "PASSWORD_REQUIRED": "Şifre zorunludur.",
+    "PASSWORD_MUST_BE_STRING": "Şifre bir metin olmalıdır.",
+    "PASSWORD_MIN_LENGTH": "Şifre en az 6 karakter olmalıdır.",
+    "NAME_REQUIRED": "İsim zorunludur.",
+    "NAME_NOT_EMPTY": "İsim boş olamaz.",
+    "NAME_MUST_BE_STRING": "İsim bir metin olmalıdır."
   },
   "movies": {
     "SEARCH_NOT_FOUND": "\"{query}\" sorgusu için sonuç bulunamadı.",
