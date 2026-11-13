@@ -77,7 +77,10 @@ describe('UsersController', () => {
 
   describe('updateUserDetails', () => {
     it('should update user details and return success data', async () => {
-      const updateDto = { name: 'Updated Name' };
+      const updateDto = {
+        name: 'Updated Name',
+        currentPassword: 'current-password',
+      };
       const successData = {
         success: true,
         message: 'User details have been updated successfully.',
@@ -102,7 +105,10 @@ describe('UsersController', () => {
     });
 
     it('should throw UnauthorizedException when updating other user', async () => {
-      const updateDto = { name: 'Hacker Name' };
+      const updateDto = {
+        name: 'Hacker Name',
+        currentPassword: 'current-password',
+      };
       mockUsersService.updateUserDetails.mockResolvedValue({
         code: 401,
         status: 'error',
